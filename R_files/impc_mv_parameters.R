@@ -129,7 +129,6 @@ omitl <- list(list(cen = c("Bcm"), proc = c("Auditory Brain Stem Response"), omi
               list(cen = c("Tcp"), proc = c("Open Field"), omit = T),
               list(cen = c("Wtsi"), proc = c("Grip Strength"), omit = T))
 
-
 #####################################################################
 #Parameters for EM algorithm for MAP estimation
 methnam <- c("MVphen", "MV")[2]
@@ -175,11 +174,6 @@ default.parameters$eqtl <- list(N = 5000, P = 44,
                                 var.in.name = var.in.name,
                                 var.in.name.mash = var.in.name.mash,
                                 var.in.name.ed = var.in.name.ed)
-
-
-
-
-
 
 if(!"Data" %in% ls())
   Data <- "impc"
