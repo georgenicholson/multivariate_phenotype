@@ -74,8 +74,6 @@ if(Data == "impc"){
   ref <- read.csv(paste0(base.dir, "/data_in/reference_line_genotypeIds.csv"))
 }
 
-
-
 Y.eml <- S.eml <- list()
 Y.eml$raw <- Yhat
 Y.eml$zero <- Y

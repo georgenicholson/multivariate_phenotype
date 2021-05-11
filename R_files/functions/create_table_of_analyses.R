@@ -1,5 +1,11 @@
 
 create_table_of_analyses <- function(check_status = T) {
+  ########################################
+  # Variables to be included in filename
+  var.in.name <- c("N", "P", "nSig", "EMtol", "EMfm", "EMbic", "EMwish", "EMK", "EMKup", "seed", "Data")
+  var.in.name.mash <- c("N", "P", "si", "bo", "EDtol", "seed", "Data")
+  var.in.name.ed <- c("N", "P", "EDmeth", "EDtol", "nSig", "seed", "Data")
+  
   ####################################################
   # General parameters to pass to run_EM.R
   #############################################################
@@ -34,6 +40,8 @@ create_table_of_analyses <- function(check_status = T) {
   ED_analyses_to_run <- c("mash", "justED")[2]
   ED_conv_tol <- c(1e-3, 1e-4, 1e-5, 1e-6)[2]
   
+  
+  
   #############################
   # Create runtab
   runtab <- expand.grid(N = N_values_to_run, P = P_values_to_run, da = data_sets_to_analyse, 
@@ -42,8 +50,9 @@ create_table_of_analyses <- function(check_status = T) {
                         EDtol = ED_conv_tol, EMtol = EM_conv_tolerance_to_run, EMfm = EM_model_type_to_run, 
                         EMK = EM_dim_fac_space_to_run, 
                         EMbic = EM_BIC_penalty, EMwish = EM_use_wishart_prior, 
-                        EMKup = EM_update_fac_space_dim, bo = mash_include_ED_components, si = mash_include_singletons, stringsAsFactors = F)
-  runtab[!grepl("em", runtab$me), c("EMtol", "EMfm", "EMbic", "EMmash", "EMK", "EMKup")] <- NA
+                        EMKup = EM_update_fac_space_dim, bo = mash_include_ED_components, 
+                        si = mash_include_singletons, stringsAsFactors = F)
+  runtab[which(!grepl("em", runtab$me)), c("EMtol", "EMfm", "EMbic",  "EMK", "EMKup")] <- NA
   
   #############################
   # Filter runtab
@@ -114,8 +123,9 @@ create_table_of_analyses <- function(check_status = T) {
       }
       
       file.base <- c()
-      for(seed in 1:ntimes) {
-        file.base <- c(file.base, paste0(paste(paste(var.in.name.use, sapply(var.in.name.use, get), sep = "_"), collapse = "_")))
+      for(seed in 1:n_seed_to_run) {
+        file.base <- c(file.base, paste0(paste(paste(var.in.name.use, 
+                                           sapply(var.in.name.use, function(x) get(x, envir = environment())), sep = "_"), collapse = "_")))
       }
       print("made it")
       loocv.res.store.namc <- paste0(meth.comp.output.dir, "/", file.base, "_loocv_res.RData")

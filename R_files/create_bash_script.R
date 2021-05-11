@@ -1,11 +1,11 @@
 rm(list = ls())
-source("R_files/impc_mv_parameters.R")
+# source("R_files/impc_mv_parameters.R")
 
 fn.source.out <- sapply(list.files("R_files/functions", full.names = T), source)
-debug({
-runtab <- create_table_of_analyses()
-})
-
+# undebug({
+# debugonce(create_table_of_analyses)
+runtab <- create_table_of_analyses(check_status = T)
+# })
 
 
 save(runtab, file = file.runtab)
