@@ -40,8 +40,6 @@ create_table_of_analyses <- function(check_status = T) {
   ED_analyses_to_run <- c("mash", "justED")[2]
   ED_conv_tol <- c(1e-3, 1e-4, 1e-5, 1e-6)[2]
   
-  
-  
   #############################
   # Create runtab
   runtab <- expand.grid(N = N_values_to_run, P = P_values_to_run, da = data_sets_to_analyse, 
@@ -130,8 +128,10 @@ create_table_of_analyses <- function(check_status = T) {
       print("made it")
       loocv.res.store.namc <- paste0(meth.comp.output.dir, "/", file.base, "_loocv_res.RData")
       fac.res.store.namc <- paste0(meth.comp.output.dir, "/", file.base, "_facres.RData")
-      res.store.namc <- paste0(meth.comp.output.dir, "/", file.base, switch(meth, eb = "_res.RData", mash = "_mash_resl.RData", XD = "_bovy_resl.RData"))
-      emout.file.namc <- paste0(meth.comp.output.dir, "/", file.base, switch(meth, eb = "_emout.RData", mash = NA, XD = NA))
+      res.store.namc <- paste0(meth.comp.output.dir, "/", file.base, 
+                               switch(meth, eb = "_res.RData", mash = "_mash_resl.RData", XD = "_bovy_resl.RData"))
+      emout.file.namc <- paste0(meth.comp.output.dir, "/", file.base, 
+                                switch(meth, eb = "_emout.RData", mash = NA, XD = NA))
       runtab[scen, fcheckfields] <- list(all(file.exists(emout.file.namc)),
                                          format(min(file.info(emout.file.namc)[, "ctime"]), format = "%d-%b"),
                                          format(max(file.info(emout.file.namc)[, "ctime"]), format = "%d-%b"),
