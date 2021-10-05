@@ -30,7 +30,7 @@ git checkout george
 # Switch to local george branch
 git checkout george
 git add -A # Add all files to be committed
-git commit -m 'Initial organisation 1' # Commit files with message
+git commit -m 'Initial organisation 2' # Commit files with message
 git push --set-upstream origin george
 
 # switch to local main branch
