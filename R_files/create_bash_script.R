@@ -67,7 +67,7 @@ for(scen in scen.do){#scen <- 1#
 
 
 
-
+C:\Users\nicho\OneDrive\Documents\slurm_setup_files\shell_files
 # "#SBATCH --output=/mnt/x/projects/impc_mv_analysis/R_files/impc_mv_analysis/testing/test_%j.out",
 # "#SBATCH --error=/mnt/x/projects/impc_mv_analysis/R_files/impc_mv_analysis/testing/test_%j.err",
 
