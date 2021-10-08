@@ -67,7 +67,7 @@ for(scen in scen.do){#scen <- 1#
 
 
 
-C:\Users\nicho\OneDrive\Documents\slurm_setup_files\shell_files
+# C:\Users\nicho\OneDrive\Documents\slurm_setup_files\shell_files
 # "#SBATCH --output=/mnt/x/projects/impc_mv_analysis/R_files/impc_mv_analysis/testing/test_%j.out",
 # "#SBATCH --error=/mnt/x/projects/impc_mv_analysis/R_files/impc_mv_analysis/testing/test_%j.err",
 
@@ -113,7 +113,7 @@ nth <- 0
 #collect results
 restabl <- list()
 restab.checkl <- list()
-scen = 7#for(scen in 1:nrow(runtab)){#scen <- 1#
+for(scen in 1:nrow(runtab)){#scen <- 1#
   ntimes <- runtab$ntimes[scen]
   restab.num.sum <- restab.num.sumsq <- restab.denom.sum <- 0
   nsuccess <- 0
