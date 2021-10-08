@@ -51,13 +51,13 @@ create_table_of_analyses <- function(control, check_status = T, run_type = c("de
     runtab$rand <- ifelse(grepl("rand", runtab$Meth), T, F)
     runtab$loocv <- ifelse(runtab$Meth == "MVphen" & runtab$nSig == 1 & runtab$N == 2000, T, F)
     rownames(runtab) <- 1:nrow(runtab)
-    runtab <- unique(runtab)
     if (run_type == "test_benchmark") {
       runtab$n_subsamples <- 1  
       runtab$N <- 200  
       runtab$P <- 20
       runtab$MVphen_K <- 5
     }
+    runtab <- unique(runtab)
   }  
   runtab
   

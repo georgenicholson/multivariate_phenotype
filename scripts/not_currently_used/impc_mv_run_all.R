@@ -1,5 +1,5 @@
 
-source("X:/projects/impc_mv_analysis/R_files/impc_mv_parameters.R", sep = ""))
+source("X:/projects/impc_mv_analysis/R_files/impc_mv_parameters.R", sep = "")
 
 source(paste(R.file.dir, "/impc_import_data/impc_import_data.R", sep = ""))
 source(paste(R.file.dir, "/impc_import_data/create_negative_controls.R", sep = ""))

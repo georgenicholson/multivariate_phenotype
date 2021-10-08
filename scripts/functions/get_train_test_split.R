@@ -24,7 +24,7 @@ get_train_test_split <- function(control, Data, N, P, phens_to_use) {
   # Nseqsub <- c(control$Nseq[control$Nseq <= N_max_train], control$default_parameters[[Data]]$N)
   train_test_list <- list()
   train_test_list$sams_for_cor_est <- train_test_list$sams_for_model_training <- 
-    train_test_list$sams_for_model_testing <- train_test_list$sams_for_lik_cross_val <- 
+    train_test_list$sams_for_model_testing <- train_test_list$sams_for_lik_cross_val <- train_test_list$sams_for_strong_cov_est <- 
     matrix(FALSE, nrow = N_full, ncol = control$n_subsamples, dimnames = list(rownames(Yhat), 1:control$n_subsamples))
   # train_test_list$phens_to_use <- matrix(FALSE, nrow = P_full, ncol = control$n_subsamples, dimnames = list(colnames(Yhat), 1:control$n_subsamples))
   # for(N in Nseqsub){#N <- max(Nseqsub)#Nseqsub[1]#
@@ -71,7 +71,7 @@ get_train_test_split <- function(control, Data, N, P, phens_to_use) {
             # phens_to_use <- sample(colnames(Y), P)
             snpmap.sub <- snpmap.sub[order(snpmap.sub$random.ordering), ]
             sams.for.cor.est <- snpmap.sub$snp[snpmap.sub$task == "random.train.est.cor"]
-            sams.for.strong.cov.est <- snpmap.sub$snp[snpmap.sub$task == "strong.est.cov "]
+            sams.for.strong.cov.est <- snpmap.sub$snp[snpmap.sub$task == "strong.est.cov"]
             sams.for.model.fitting <- snpmap.sub$snp[snpmap.sub$task == "random.train.fit.model"]
             sams.for.testing.random <- snpmap.sub$snp[which(snpmap.sub$task == "random.test.model")]
             # sams.for.testing.random <- sams.for.testing.random[1:min(length(sams.for.testing.random), floor(max.num.sams.for.testing / 2))]
@@ -79,7 +79,8 @@ get_train_test_split <- function(control, Data, N, P, phens_to_use) {
             # sams.for.testing.strong <- sams.for.testing.strong[1:min(length(sams.for.testing.strong), floor(max.num.sams.for.testing / 2))]
             sams.for.testing <- c(sams.for.testing.random, sams.for.testing.strong)
             sams.for.lik.cross.val <- sams.for.testing[snpmap.sub[match(sams.for.testing, snpmap.sub$snp), "task"] == "random.test.model"]
-            train_test_list$sams_for_strong_cov_est <- sams.for.strong.cov.est
+            # train_test_list$sams_for_strong_cov_est <- sams.for.strong.cov.est
+            train_test_list$sams_for_strong_cov_est[sams.for.strong.cov.est, subsample_seed] <- TRUE
             
             # suppressWarnings(save(snpmap.sub, phens_to_use, 
             #                       sams.for.cor.est, sams.for.model.fitting, sams.for.testing, sams.for.lik.cross.val, 

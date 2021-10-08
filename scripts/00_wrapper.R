@@ -1,4 +1,24 @@
 rm(list = ls())
+# if (!requireNamespace("remotes"))
+#   install.packages("remotes")
+# remotes::install_github("rstudio/renv")
+renv::snapshot()
+renv::activate()
+renv::restore()
+renv::status()
+# renv::init()
+# install.packages("devtools")
+# install.packages("RcppGSL")
+
+
+install.packages("doParallel")
+install.packages("Hmisc")
+install.packages("jpeg")
+install.packages("KeyboardSimulator")
+install.packages("mashr")
+install.packages("mclust")
+install.packages("png")
+install.packages("tiff")
 
 ##########################################
 # Super parameters
@@ -16,12 +36,6 @@ for (file_curr in fns_to_source) {
 # control to contain parameters
 control <- get_control_parameters_mv()
 
-##########################################
-# Load libraries
-libs.need <- c("doParallel", "Rcpp", "Matrix", "XML", "MASS", "httr", "mashr")#, "mclust")
-for (libc in libs.need) {
-  library(libc, character.only = T)
-}
 
 ##########################################
 # Create directory structure
@@ -42,9 +56,22 @@ if (!"data/impc" %in% list.dirs(control$data_dir)) {
 # Get table of analyses
 analysis_table <- create_table_of_analyses(control = control, check_status = F, run_type = run_type)
 
+# if("cl" %in% ls())
+#   stopCluster(cl)
+# cl <- makeCluster(20)
+# registerDoParallel(cl = cl)
 
-for (scen in 6) {
-  # for (scen in 1:nrow(analysis_table)) {
+analysis_table <- analysis_table[!analysis_table$Meth == "MVphen", ]
+
+# outl <- foreach(scen = 1:nrow(analysis_table), .verbose = T, .errorhandling = "pass") %dopar% {
+for (scen in 1:nrow(analysis_table)) {
+# for (scen in 6) {
+  ##########################################
+  # Load libraries
+  libs.need <- c("doParallel", "Rcpp", "Matrix", "XML", "MASS", "httr", "mashr")#, "mclust")
+  for (libc in libs.need) {
+    library(libc, character.only = T)
+  }
   ##########################################
   # Choose scenario and subsample seed to run
   var_to_assign <- c("N", "P", "Data", "Meth", "nSig", "MVphen_K", "n_subsamples")
@@ -61,7 +88,7 @@ for (scen in 6) {
     if(Data == "eqtl"){
       mash.in <- readRDS("data/eqtl/MatrixEQTLSumStats.Portable.ld2.Z.rds")
       Yhat <- rbind(mash.in$strong.b, mash.in$random.b, mash.in$random.test.b)
-      smat <- rbind(mash.in$strong.z, mash.in$random.z, mash.in$random.test.z)
+      smat <- Yhat / rbind(mash.in$strong.z, mash.in$random.z, mash.in$random.test.z)
     }
     if(Data == "impc"){
       Yhat <- readRDS("data/impc/Yhatmat.RDS")
@@ -93,12 +120,11 @@ for (scen in 6) {
     ###################################
     # Create and Load train-test samples information 
     train_test_list_file_curr <- paste0(Data, "_N_", N, "_P_", P)
-    if (!file.exists(train_test_list_file_curr)) {
+    # if (!file.exists(train_test_list_file_curr)) {
       train_test_list <- get_train_test_split(control = control, N = N, P = P, Data = Data)
       saveRDS(object = train_test_list, file = train_test_list_file_curr)
-    }
+    # }
     train_test_list <- readRDS(file = train_test_list_file_curr)
-    
     
     
     ###################################
@@ -106,11 +132,13 @@ for (scen in 6) {
     for (var_assign_subsample in c("sams_for_lik_cross_val", 
                                    "sams_for_model_testing", 
                                    "sams_for_model_training", 
-                                   "sams_for_cor_est")) {
+                                   "sams_for_cor_est",
+                                   "sams_for_strong_cov_est")) {
       subsam_mat_curr <- train_test_list[[var_assign_subsample]]
       assign(x = var_assign_subsample, value = rownames(subsam_mat_curr)[subsam_mat_curr[, subsamseed]])
     }
     
+    sum(train_test_list$sams_for_strong_cov_est)
     
     dat.typev <- switch(Data, impc = c("raw", "zero"), eqtl = "raw")
     
@@ -173,7 +201,7 @@ for (scen in 6) {
     resl.store.namc <- paste0(file.base, "_resl.RDS")
     fac.res.store.namc <- paste0(file.base, "_facres.RDS")
     loocv.res.store.namc <- paste0(file.base, "_loocv_res.RDS")
-    if (Meth == "MVphen") {
+    if (grepl("MVphen", Meth)) {
       rerun.em <- T
       if(rerun.em | !file.exists(emout.file.namc)){
         print("Running EM algorithm")
@@ -235,7 +263,7 @@ for (scen in 6) {
     
     ##################################################
     # Fit models using Extreme Deconvolution and/or MASH
-    if(Meth %in% c("mash", "XD") & Sys.info()["sysname"] != "Windows"){
+    if(Meth %in% c("mash", "XD")){
       # si <- include.singletons
       # bo <- run.XD
       XDmeth <- Meth
@@ -267,7 +295,7 @@ for (scen in 6) {
       }
       if(Data == "eqtl"){
         # table(snpmap.sub$task)
-        snps.strong.use <- train_test_list$sams_for_strong_cov_est
+        snps.strong.use <- sams_for_strong_cov_est
         # snps.strong.use <- snpmap.sub$snp[snpmap.sub$task == "strong.est.cov"]
         big.eff.use <- snps.strong.use
         Ztil <- scale((Y / S)[big.eff.use, phens_to_use], scale = F)
@@ -287,6 +315,9 @@ for (scen in 6) {
       
       mashdata.for.model.fitting <- mash_set_data(Bhat = Y[sams_for_model_training, phens_to_use], 
                                                   Shat = S[sams_for_model_training, phens_to_use], V = R.init)
+      
+      
+      
       mashdata.big.effects.for.XD <- mash_set_data(Bhat = Y[big.eff.use, phens_to_use], 
                                                    Shat = S[big.eff.use, phens_to_use], V = R.init)
       
@@ -366,16 +397,10 @@ for (scen in 6) {
         Ul.data <- c(Ul.XD.use, Ul.rank1)
         names(Ul.data) <- paste0("U.", 1:(3 + K2))
         cov.meth <- c("identity", "equal_effects", "simple_het")
-        if(include.singletons == 1)
-          cov.meth <- c(cov.meth, "singletons")
+        cov.meth <- c(cov.meth, "singletons")
         Ul.canon <- cov_canonical(mashdata.for.model.fitting, cov_methods = cov.meth)
         # Ul.eb <- list(Sig)
         mashmethv <- list(c("data", "canon"), c("data"), c("eb"), c("canon"), c("data", "canon", "eb"))[1]#[c(1, 2, 3, 4)]
-        # #############
-        # mashmethv <- list(c("data", "canon"), c("data"), c("eb"), c("canon"), c("data", "canon", "eb"))[3]#[c(1, 2, 3, 4)]
-        # mashmeth <- mashmethv[[1]]
-        # priorc <- "nullbiased"
-        # #####
         if(!"resl" %in% ls())
           resl <- list()
         for(priorc in c("nullbiased", "uniform")[1]){#null.bias in c(T, F)){#priorc <- "nullbiased"#
