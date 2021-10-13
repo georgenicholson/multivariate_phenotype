@@ -7,7 +7,7 @@ get_control_parameters_mv <- function(control = list()) {
   # Parameters for simulations
   defaults$Nseq <- 500#c(100, 200, 500)#, 1000, 2000, 5000)
   defaults$Pseq <- c(10, 20)#, 40, 60, 100)
-  defaults$n_subsamples <- 10
+  defaults$n_subsamples <- 2
   
   ######################################
   #Parameters for FDR control
@@ -29,9 +29,10 @@ get_control_parameters_mv <- function(control = list()) {
   
   ########################################
   # Variables to be included in filename
-  defaults$variables_in_filename_MVphen <- c("Data", "Meth", "N", "P", "subsamseed", "nSig", "MVphen_K")
-  defaults$variables_in_filename_mash <- c("Data", "Meth", "N", "P", "subsamseed")
-  defaults$variables_in_filename_XD <- c("Data", "Meth", "N", "P", "subsamseed", "nSig", "XDmeth")
+  # defaults$variables_in_filename_MVphen <- c("Data", "Meth", "N", "P", "subsamseed", "nSig", "MVphen_K")
+  # defaults$variables_in_filename_mash <- c("Data", "Meth", "N", "P", "subsamseed")
+  # defaults$variables_in_filename_XD <- c("Data", "Meth", "N", "P", "subsamseed", "nSig", "XDmeth")
+  defaults$variables_in_filename <- c("Data", "Meth", "N", "P", "subsamseed", "nSig", "MVphen_K", "XDmeth")
   
   # defaults$var.in.name <- c("N", "P", "nSig", "EMtol", "EMfm", "EMbic", "EMwish", "EMK", "EMKup", "subsamseed", "Data")
   # defaults$var.in.name.mash <- c("N", "P", "si", "bo", "EDtol", "subsamseed", "Data")

@@ -152,7 +152,7 @@ em.update.function <- function(Y.em, S.em, Sigl, R, omegaseq, pimat, Ksig,
               fa.covmat <- Ctl[[sc]] / btl[[sc]]
               lower.psi <- .005
               control <- list(nstart = 1, trace = F, lower = lower.psi, opt = list(maxit = 10000, factr = 1e7), rotate = NULL)
-              fa.tryer <- try({
+              fa.tryer <- try(silent = TRUE, expr = {
                 fa.out <- factanal(factors = Kc, covmat = fa.covmat, n.obs = N, start = fa.startc, control = control)
               })
               fa.failed <- inherits(fa.tryer, "try-error")
@@ -236,8 +236,8 @@ em.update.function <- function(Y.em, S.em, Sigl, R, omegaseq, pimat, Ksig,
     t0 <- Sys.time()
     for(i in 1:nrow(Y.em)){
       propdone <- i / nrow(Y.em)
-      cat(paste0("\rCalculating likelihood matrix; estimated time remaining = ", 
-                 ceiling(difftime(Sys.time(), t0, units = "mins") * (1 - propdone) / propdone), " mins "))
+      # cat(paste0("\rCalculating likelihood matrix; estimated time remaining = ", 
+      #            ceiling(difftime(Sys.time(), t0, units = "mins") * (1 - propdone) / propdone), " mins "))
       if(any(!is.na(Y.em[i, ]))){
         if(recalc.llmat){
           # logmvndensc <- matrix(-Inf, M, nSig)

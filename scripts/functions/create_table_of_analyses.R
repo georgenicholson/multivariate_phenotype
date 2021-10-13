@@ -1,4 +1,6 @@
-
+# control
+# check_status = T
+# run_type = c("demo", "main", "benchmark", "test_benchmark")[2]
 create_table_of_analyses <- function(control, check_status = T, run_type = c("demo", "main", "benchmark", "test_benchmark")[2]) {
   
   if(run_type == "demo") {
@@ -6,6 +8,8 @@ create_table_of_analyses <- function(control, check_status = T, run_type = c("de
                           Meth = c("MVphen", "XD", "mash"), 
                           nSig = 1, 
                           MVphen_K = 3, 
+                          mem = 2000,
+                          n_subsamples = 1,
                           stringsAsFactors = F)
   }  
   
@@ -14,6 +18,8 @@ create_table_of_analyses <- function(control, check_status = T, run_type = c("de
                          Meth = "MVphen", 
                          nSig = 1, 
                          MVphen_K = 20, 
+                         mem = 2000,
+                         n_subsamples = control$n_subsamples,
                          stringsAsFactors = F)
   }  
   
@@ -22,7 +28,8 @@ create_table_of_analyses <- function(control, check_status = T, run_type = c("de
     runtab <- expand.grid(N = NA, P = NA, Data = c("impc", "eqtl"), 
                           Meth = c("MVphen", "XD", "mash", "MVphen_rand", "MVphen_N_500"), 
                           nSig = 1:2, 
-                          MVphen_K = c(15, 20, 30, 40), 
+                          MVphen_K = c(15, 20, 30, 40),
+                          n_subsamples = control$n_subsamples,
                           stringsAsFactors = F)
     runtab[which(!grepl("MVphen", runtab$Meth)), "MVphen_K"] <- NA
   
@@ -73,26 +80,23 @@ create_table_of_analyses <- function(control, check_status = T, run_type = c("de
       # print(scen)
       for(j in 1:ncol(runtab))
         assign(colnames(runtab)[j], runtab[scen, j], pos = sys.frame(which = 0))
-      Data <- da
-      if(grepl("MVphen", Meth)){
-          variables_in_filename_use <- control$variables_in_filename_MVphen
-        if(rand) {
-          variables_in_filename_use <- c(variables_in_filename_use, "rand")
-        }
-      }
-      if(Meth == "mash"){
-        variables_in_filename_use <- control$variables_in_filename_mash
-      }
-      if(Meth == "XD"){
-        variables_in_filename_use <- control$variables_in_filename_XD
-      }
-      
+      # if(grepl("MVphen", Meth)){
+      #     variables_in_filename_use <- control$variables_in_filename_MVphen
+      # }
+      # if(Meth == "mash"){
+      #   variables_in_filename_use <- control$variables_in_filename_mash
+      # }
+      # if(Meth == "XD"){
+      #   variables_in_filename_use <- control$variables_in_filename_XD
+      # }
+      variables_in_filename_use <- control$variables_in_filename
+      XDmeth <- Meth
       file_core_name <- c()
-      for(seed in 1:n_seed_to_run) {
+      for(subsamseed in 1:control$n_subsamples) {
         file_core_name <- c(file_core_name, paste0(paste(paste(variables_in_filename_use, 
                                            sapply(variables_in_filename_use, function(x) get(x, envir = environment())), sep = "_"), collapse = "_")))
       }
-      # print("made it")
+      # print("made itana ")
       loocv_results_filename <- paste0(control$methods_comp_dir, "/", file_core_name, "_loocv_res.RData")
       factor_results_filename <- paste0(control$methods_comp_dir, "/", file_core_name, "_facres.RData")
       basic_results_filename <- paste0(control$methods_comp_dir, "/", file_core_name, 
