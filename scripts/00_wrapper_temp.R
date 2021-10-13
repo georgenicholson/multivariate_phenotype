@@ -132,15 +132,12 @@ XDmeth <- Meth
     # Choose phen subset
     ph_all <- colnames(Yhat)
     if (run_type %in% c("demo", "test_benchmark")) {
-      phens_ok_to_use <- ph_all[colMeans(is.na(Yhat[, ph_all])) < .75]
-      set.seed(2)
+      phens_ok_to_use <- ph_all[colMeans(is.na(Y[, ph_all])) < .8]
       phens_to_use <- sample(x = phens_ok_to_use, size = P)
     } else {
       phens_to_use <- ph_all
     }
 
-    
-    hist(colMeans(is.na(Yhat[, ph_all])))
     ###################################
     # Create and Load train-test samples information 
     train_test_list_file_curr <- paste0(Data, "_N_", N, "_P_", P)

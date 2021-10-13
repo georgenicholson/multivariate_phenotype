@@ -1,69 +1,73 @@
 rm(list = ls())
-# source("R_files/impc_mv_parameters.R")
+##########################################
+# Super parameters
+run_type <- c("demo", "main", "benchmark", "test_benchmark")[1]
 
-fn.source.out <- sapply(list.files("R_files/functions", full.names = T), source)
+##########################################
+# Source function files
+fns_to_source <- list.files("scripts/functions", full.names = TRUE)
+for (file_curr in fns_to_source) {
+  source(file_curr)
+}
 
+##########################################
+# control to contain parameters
 control <- get_control_parameters_mv()
-# undebug({
-# debugonce(create_table_of_analyses)
-runtab <- create_table_of_analyses(check_status = T)
-# })
 
+##########################################
+# Create directory structure
+for(dirc in c(control$output_dir, control$methods_comp_dir, control$global_res_dir, control$data_dir, control$train_test_samples_dir))
+  dir.create(dirc, showWarnings = F)
 
-save(runtab, file = file.runtab)
-scen.do <- which(!runtab$res.ok)
-runtab[scen.do, ]
-ntimes <- runtab$ntimes[scen]
+##########################################
+# Download data
+if (!"data/impc" %in% list.dirs(control$data_dir)) {
+  temp <- tempfile()
+  download.file(url = "https://www.dropbox.com/s/wz6mg35n502au6a/multivariate_phenotype_paper_supporting_data.zip?dl=1", temp, mode = "wb")
+  unzip(temp, exdir = control$data_dir)
+  unlink(temp)
+}
+
+##########################################
+# Get table of analyses
+analysis_table <- create_table_of_analyses(control = control, check_status = T, run_type = run_type)
+scen_to_run <- 1:nrow(analysis_table)
+
+network_path_to_MVphen_git_repo <- "/mnt/x/projects/impc_mv_analysis/github_multivariate_phenotype/multivariate_phenotype"
+
+dir.create(".job", showWarnings = FALSE)
 partc <- c("debug", "debug11", "debug6", "debug8")[2]
-file.copy(from = paste0(R.file.dir, "/impc_mv_paper_code/run_EM.R"),
-          to = paste0(R.file.dir, "/impc_mv_analysis/run_EM_algorithm_temp_sims.R"), overwrite = T)
-for(scen in scen.do){#scen <- 1#
-  ntimes <- runtab$ntimes[scen]
-  for(seedc in 1:ntimes){#seedc <- 1#
-    # for(seedc in 1:4){#seedc <- 1#
-    var.in.name.bash <- unique(c(var.in.name, var.in.name.ed, var.in.name.mash))
-    var.in.name.bash <- var.in.name.bash[order(match(var.in.name.bash, colnames(runtab)))]
-    # var.in.name.bash <- setdiff(colnames(runtab), c("ma", "fu", "ntimes", "mem"))[1:8]
-    var.in.name.use <- var.in.name.bash[var.in.name.bash %in% names(runtab)]
-    var.in.name.use <- var.in.name.use[!is.na(runtab[scen, match(var.in.name.use, names(runtab))])]
-    var.in.name.use <- c(var.in.name.use, "seed")
-    namc <- gsub("XXX", seedc, runtab[scen, "file.base"])
-    #paste(c(paste(var.in.name.use, runtab[scen, var.in.name.use], sep = "_"), paste0("seed_", seedc)), collapse = "_")
-    bashscript <- paste0(bash.file.dir, "/test_script_", namc, ".sh")
-    # file.out <- paste0(prefix, namc, ".RData")#paste0("restab_", namc, ".RData")
-    # file.out.restab <- paste0(prefix, "_restab_", namc, ".RData")
-    # file.out.resl <- paste0(prefix, "_res_", namc, ".RData")
-    # if((!file.exists(paste0(meth.comp.output.dir, "/", file.out.restab))) | replace.files){
+file.copy(from = "scripts/00_wrapper.R",
+          to = "scripts/00_wrapper_temp.R", overwrite = T)
+for (scen in scen_to_run) {#scen <- 1#
+  for (subsamseed in 1:analysis_table$n_subsamples[scen]) {#subsamseed <- 1#
+    file_name_curr <- gsub("XXX", subsamseed, analysis_table$file_core_name[scen])
+    bashscript <- paste0(".job/", file_name_curr, ".sh")
     output.file <- file(bashscript, "wb")
     cat(file = output.file, append = F, sep = "\n",
-        c("#!/bin/bash",
+        c("#!/bin/bash\n",
           "#SBATCH --ntasks=1",
-          "#SBATCH --output=/mnt/s/job_output_files/job_%j.out",
-          "#SBATCH --error=/mnt/s/job_output_files/job_%j.err",
+          paste0("#SBATCH --output=/mnt/s/job_output_files/", file_name_curr, ".out"),
+          paste0("#SBATCH --error=/mnt/s/job_output_files/", file_name_curr, ".err"),
           paste0("#SBATCH --partition ", partc),
-          paste0("#SBATCH --job-name=", namc),
-          paste0("#SBATCH --mem-per-cpu=", runtab$mem[scen], "MB"),
-          paste("srun Rscript --no-restore --no-save",
-              "/mnt/x/projects/impc_mv_analysis/R_files/impc_mv_analysis/run_EM_algorithm_temp_sims.R",
-              seedc, runtab$N[scen], runtab$P[scen], runtab$bo[scen], runtab$si[scen], 
-              runtab$da[scen], runtab$me[scen], runtab$ma[scen], runtab$fu[scen], 
-              runtab$ss[scen], runtab$nSig[scen], runtab$EDmeth[scen], runtab$EDtol[scen], 
-              runtab$EMtol[scen], runtab$EMmash[scen], runtab$EMfm[scen], runtab$EMbic[scen], 
-              runtab$EMwish[scen], runtab$EMK[scen], runtab$EMKup[scen], 
-              runtab$rand[scen], runtab$loocv[scen],
-              "--profile=task", sep = " ")))
+          paste0("#SBATCH --job-name=", file_name_curr),
+          paste0("#SBATCH --mem-per-cpu=", analysis_table$mem[scen], "MB"),
+          paste0("cd ", network_path_to_MVphen_git_repo),
+          paste("srun Rscript --no-restore --no-save scripts/00_wrapper_temp.R",
+              run_type, scen, subsamseed, sep = " ")))
     if(Sys.info()["sysname"] == "Windows"){
-      system(paste("wsl sbatch", gsub("C:/", "/mnt/c/", bashscript)))
-      # system(paste("wsl sbatch", gsub("C:/Users/nicho/Documents/bauer_sync", "/mnt/x/", bashscript)))
+      # system(paste("wsl sudo dos2unix -n", bashscript, bashscript))
+      system(paste("wsl sbatch", file.path(network_path_to_MVphen_git_repo, bashscript)))
     } else {
-      system(paste("sbatch", bashscript))
+      system(paste("sbatch", file.path(network_path_to_MVphen_git_repo, bashscript)))
     }
     close(output.file)
   }
   # Sys.sleep(2)
 }
 
-
+dos2unix < /mnt/c/Temp/test_line_endings.txt | cmp - /mnt/c/Temp/test_line_endings.txt
+# dos2unix -n 
 
 
 
@@ -73,6 +77,12 @@ for(scen in scen.do){#scen <- 1#
 
 
 
+# cat(file = "C:/Temp/test_line_endings.txt", "hello\n hello")
+# dos2unix < /mnt/c/Temp/test_line_endings.txt | cmp - /mnt/c/Temp/test_line_endings.txt
+# dos2unix -n 
+# cat -A /mnt/c/Temp/test_line_endings.txt
+# dos2unix 
+# cat -A dos2unix < /mnt/c/Temp/test_line_endings.txt
 
 
 
