@@ -7,7 +7,8 @@ get_control_parameters_mv <- function(control = list()) {
   # Parameters for simulations
   defaults$Nseq <- 500#c(100, 200, 500)#, 1000, 2000, 5000)
   defaults$Pseq <- c(10, 20)#, 40, 60, 100)
-  defaults$n_subsamples <- 2
+  defaults$n_subsamples_benchmark <- 10
+  defaults$n_subsamples_main <- 50
   
   ######################################
   #Parameters for FDR control
@@ -33,7 +34,6 @@ get_control_parameters_mv <- function(control = list()) {
   # defaults$variables_in_filename_mash <- c("Data", "Meth", "N", "P", "subsamseed")
   # defaults$variables_in_filename_XD <- c("Data", "Meth", "N", "P", "subsamseed", "nSig", "XDmeth")
   defaults$variables_in_filename <- c("Data", "Meth", "N", "P", "subsamseed", "nSig", "MVphen_K", "XDmeth")
-  
   # defaults$var.in.name <- c("N", "P", "nSig", "EMtol", "EMfm", "EMbic", "EMwish", "EMK", "EMKup", "subsamseed", "Data")
   # defaults$var.in.name.mash <- c("N", "P", "si", "bo", "EDtol", "subsamseed", "Data")
   # defaults$var.in.name.ed <- c("N", "P", "EDmeth", "EDtol", "nSig", "subsamseed", "Data")
@@ -88,10 +88,11 @@ get_control_parameters_mv <- function(control = list()) {
   #####################################################################
   # File names
   # defaults$file.runtab <- paste0(defaults$output_dir, "/runtab.RData")
-  # defaults$file.compl <- paste0(defaults$global_res_dir, "/global_compl.RData")
-  # defaults$file.resl.comp <- paste0(defaults$global_res_dir, "/global_reslcomp.RData")
-  # defaults$file.resl.comp.fac <- paste0(defaults$global_res_dir, "/global_reslcompfac.RData")
-  # defaults$file.objl <- paste0(defaults$global_res_dir, "/global_objl.RData")
+  defaults$file.compl <- paste0(defaults$global_res_dir, "/global_compl.RDS")
+  defaults$file.resl.comp <- paste0(defaults$global_res_dir, "/global_reslcomp.RDS")
+  defaults$file.resl.comp.fac <- paste0(defaults$global_res_dir, "/global_reslcompfac.RDS")
+  defaults$file.objl <- paste0(defaults$global_res_dir, "/global_objl.RDS")
+  defaults$Data_all_file <- file.path(defaults$data_dir, "Data_all.RDS") 
   # defaults$file.glob.res <- paste0(defaults$global_res_dir, "/global_eb_results.RData")
   # defaults$file.glob.loadings <- paste0(defaults$global_res_dir, "/global_eb_loadings.RData")
   # defaults$file.go.results <- paste0(defaults$global_res_dir, "/global_go_results.RData")
