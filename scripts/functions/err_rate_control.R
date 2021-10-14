@@ -1,9 +1,22 @@
 ########################################
 #Need to fix this function to have arguments for all variables used
 # err.rate.meth = "perm"; calibrate = F; sep.imp.thresh = T; test.stat = c("z", "lfsr")[1]
-err.rate.control <- function(resl, err.rate.meth = "perm", sep.imp.thresh = F, test.stat = c("z", "lfsr")[1], 
-            linemap, phmap = NULL, Yhat, use.upper.fp.est = F, control.level = c("line.fdr", "line.fwer", "phcen.fdr")[1],
-            err.thresh = .05, centre.specific.thresh = F, p.complete.null.true = 1, p.test.null.true = 1){
+err.rate.control <- function(control, 
+                              resl, 
+                              err.rate.meth = "perm", 
+                              sep.imp.thresh = F, 
+                              test.stat = c("z", "lfsr")[1], 
+                              linemap, 
+                              reflinemap,
+                              phmap = NULL, 
+                              cenmap,
+                              Yhat, 
+                              use.upper.fp.est = F, 
+                              control.level = c("line.fdr", "line.fwer", "phcen.fdr")[1],
+                              err.thresh = .05, 
+                              centre.specific.thresh = F, 
+                              p.complete.null.true = 1, 
+                              p.test.null.true = 1){
   methv <- names(resl)
   require(Hmisc)
   ####################################################################################
@@ -16,7 +29,7 @@ err.rate.control <- function(resl, err.rate.meth = "perm", sep.imp.thresh = F, t
   # resimp[, "procnam"] <- phmap[match(resimp$ph, phmap$ph), "procnam"]
   resimp$line.type <- linemap[match(resimp$geno, linemap$geno), "line.type"]
   resimp$testid <- paste(resimp$cen, resimp$ph, resimp$geno, sep = "_")
-  resimp <- resimp[!resimp$cen %in% cen.omit, ]
+  # resimp <- resimp[!resimp$cen %in% cen.omit, ]
   resimp$cenlong <- cenmap[match(resimp$cen, cenmap$cen), "nam"]
   resimp$cenphen <- paste(resimp$cenlong, resimp$ph, sep = "_")
   resimp$imputed <- NA
@@ -198,15 +211,15 @@ err.rate.control <- function(resl, err.rate.meth = "perm", sep.imp.thresh = F, t
 
   ########################################################
   #Extract reference lines results
-  ref <- read.csv(paste0(base.dir, "/data_in/reference_line_genotypeIds.csv"))
-  linun <- unique(ref$gene_symbol)
+  # reflinemap <- read.csv(paste0(base.dir, "/data_in/reference_line_genotypeIds.csv"))
+  linun <- unique(reflinemap$gene_symbol)
   phun <- unique(resimp$ph)
   for(methc in methv){
     ssl <- tl <- thl <- list()
     for(linc in linun){#linc <- linun[2]#
       for(zyg in 0:1){#zyg <- 0#
         namc <- paste(linc, zyg, sep = "_")
-        gen.shv <- ref[ref$gene_symbol == linc, "genotype_id"]
+        gen.shv <- reflinemap[reflinemap$gene_symbol == linc, "genotype_id"]
         resc <- resimp[resimp$zyg == zyg & resimp$line.type %in% truekos.for.fitting, ]
         genv <- c(na.omit(resc[match(gen.shv, resc$geno.sh), "geno"]))
         if(length(genv) <= 1)

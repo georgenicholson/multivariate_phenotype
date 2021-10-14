@@ -1,6 +1,4 @@
-# control
-# check_status = T
-# run_type = c("demo", "main", "benchmark", "test_benchmark")[2]
+
 create_table_of_analyses <- function(control, check_status = T, run_type = c("demo", "main", "benchmark", "test_benchmark")[2]) {
   
   if(run_type == "demo") {
@@ -19,7 +17,7 @@ create_table_of_analyses <- function(control, check_status = T, run_type = c("de
                          nSig = 1, 
                          MVphen_K = 20, 
                          mem = 2000,
-                         n_subsamples = control$n_subsamples,
+                         n_subsamples = control$n_subsamples_main,
                          stringsAsFactors = F)
   }  
   
@@ -29,7 +27,7 @@ create_table_of_analyses <- function(control, check_status = T, run_type = c("de
                           Meth = c("MVphen", "XD", "mash", "MVphen_rand", "MVphen_N_500"), 
                           nSig = 1:2, 
                           MVphen_K = c(15, 20, 30, 40),
-                          n_subsamples = control$n_subsamples,
+                          n_subsamples = control$n_subsamples_benchmark,
                           stringsAsFactors = F)
     runtab[which(!grepl("MVphen", runtab$Meth)), "MVphen_K"] <- NA
   
@@ -41,7 +39,6 @@ create_table_of_analyses <- function(control, check_status = T, run_type = c("de
     runtab[runtab$Data == "impc", "N"] <- control$default_parameters$impc$N
     runtab[runtab$Data == "eqtl", "P"] <- control$default_parameters$eqtl$P
     runtab[runtab$Data == "eqtl", "N"] <- control$default_parameters$eqtl$N
-    runtab$n_subsamples <- control$n_subsamples
     runtab[runtab$Meth == "MVphen_N_500", "N"] <- 500
     runtab <- runtab[which(!(runtab$Meth == "MVphen_N_500" & (runtab$Data == "eqtl" | runtab$nSig > 1 | runtab$MVphen_K != 20))), ]
     runtab <- runtab[which(!(runtab$Meth == "MVphen_rand" & (runtab$Data == "eqtl" | runtab$MVphen_K != 20))), ]
@@ -92,7 +89,7 @@ create_table_of_analyses <- function(control, check_status = T, run_type = c("de
       variables_in_filename_use <- control$variables_in_filename
       XDmeth <- Meth
       file_core_name <- c()
-      for(subsamseed in 1:control$n_subsamples) {
+      for(subsamseed in 1:n_subsamples) {
         file_core_name <- c(file_core_name, paste0(paste(paste(variables_in_filename_use, 
                                            sapply(variables_in_filename_use, function(x) get(x, envir = environment())), sep = "_"), collapse = "_")))
       }
