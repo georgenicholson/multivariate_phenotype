@@ -36,9 +36,6 @@ source(paste(R.file.dir, "/impc_mv_paper_code/factor_model.R", sep = ""))
 source(paste(R.file.dir, "/impc_plots/plot_power_comparisons.R", sep = ""))
 # uv_mv_scatter.jpg: supplementary figure examining concordance between UV and MV
 
-
-
-
 source(paste(R.file.dir, "/impc_plots/plot_ref_lines.R", sep = ""))
 # ref_lines_heatmap.jpg: Replicability heat map
 # ref_lines_z_scatter.jpg: replicability scatterplots

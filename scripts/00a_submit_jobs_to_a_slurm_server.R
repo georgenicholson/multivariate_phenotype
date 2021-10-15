@@ -33,34 +33,14 @@ if (!"data/impc" %in% list.dirs(control$data_dir)) {
 analysis_table <- create_table_of_analyses(control = control, check_status = T, run_type = run_type)
 
 
-
-dir.create(".job")
-# save(runtab, file = file.runtab)
-# scen.do <- which(!runtab$res.ok)
-# runtab[scen.do, ]
-# ntimes <- runtab$ntimes[scen]
+dir.create(".job", showWarnings = F)
 partc <- c("debug", "debug11", "debug6", "debug8")[2]
 file.copy(from = "scripts/00_wrapper.R",
           to = "scripts/00_wrapper_temp.R", overwrite = T)
 scen <- 1#for (scen in scen.do) {#scen <- 1#
   subsamseed <- 1##for (subsamseed in 1:analysis_table$n_subsamples) {#subsamseed <- 1#
-    # for(subsamseed in 1:4){#subsamseed <- 1#
-    # var.in.name.bash <- unique(c(var.in.name, var.in.name.ed, var.in.name.mash))
-    # var.in.name.bash <- var.in.name.bash[order(match(var.in.name.bash, colnames(runtab)))]
-    # # var.in.name.bash <- setdiff(colnames(runtab), c("ma", "fu", "ntimes", "mem"))[1:8]
-    # var.in.name.use <- var.in.name.bash[var.in.name.bash %in% names(runtab)]
-    # var.in.name.use <- var.in.name.use[!is.na(runtab[scen, match(var.in.name.use, names(runtab))])]
-    # var.in.name.use <- c(var.in.name.use, "seed")
-    
-    
     file_name_curr <- gsub("XXX", subsamseed, analysis_table$file_core_name[subsamseed])
-    
-    #paste(c(paste(var.in.name.use, runtab[scen, var.in.name.use], sep = "_"), paste0("seed_", subsamseed)), collapse = "_")
     bashscript <- paste0(".job/", file_name_curr, ".sh")
-    # file.out <- paste0(prefix, namc, ".RData")#paste0("restab_", namc, ".RData")
-    # file.out.restab <- paste0(prefix, "_restab_", namc, ".RData")
-    # file.out.resl <- paste0(prefix, "_res_", namc, ".RData")
-    # if((!file.exists(paste0(meth.comp.output.dir, "/", file.out.restab))) | replace.files){
     output.file <- file(bashscript, "wb")
     cat(file = output.file, append = F, sep = "\n",
         c("#!/bin/bash\n",
@@ -77,7 +57,6 @@ scen <- 1#for (scen in scen.do) {#scen <- 1#
     if(Sys.info()["sysname"] == "Windows"){
       system(paste0("wsl dos2unix -n .job/", file_name_curr, ".sh .job/", file_name_curr, ".sh"))
       system(paste("wsl sbatch", gsub("C:/", "/mnt/c/", bashscript)))
-      # system(paste("wsl sbatch", gsub("C:/Users/nicho/Documents/bauer_sync", "/mnt/x/", bashscript)))
     } else {
       system(paste("sbatch", bashscript))
     }
@@ -86,9 +65,13 @@ scen <- 1#for (scen in scen.do) {#scen <- 1#
   # Sys.sleep(2)
 }
 
-dos2unix < /mnt/c/Temp/test_line_endings.txt | cmp - /mnt/c/Temp/test_line_endings.txt
-# dos2unix -n 
 
+
+
+dos2unix < /mnt/c/Temp/test_line_endings.txt | cmp - /mnt/c/Temp/test_line_endings.txt
+
+
+sinfo
 
 
 # C:\Users\nicho\OneDrive\Documents\slurm_setup_files\shell_files

@@ -1,5 +1,10 @@
 # rm(list = ls())
+path_to_dir <- "C:/Users/nicho/Documents/bauer_sync/projects/impc_mv_analysis/github_multivariate_phenotype/multivariate_phenotype"
+renv::activate(path_to_dir)
+renv::restore(path_to_dir)
 arguments <- commandArgs()
+
+
 if("--args" %in% arguments){
   argnam.in <- data.frame(nam = c("run_type", "scen", "subsamseed"), 
                           coersion.fn = c("as.character", "as.numeric", "as.numeric"), 
