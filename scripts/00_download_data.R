@@ -53,5 +53,39 @@ for (Data in c("eqtl", "impc")) {
   Data_all[[Data]]$P_all <- length(Data_all[[Data]]$meas_names)
 }
 
+
+
+
+#############################################################
+#create and save ordering of procedures for plotting, so that labels don't overlap
+###################################
+phmap <- Data_all$impc$phmap
+procall <- unique(phmap$procnam)
+phenall <- unique(phmap$ph)
+proctab <- table(phmap[match(phenall, phmap$ph), "procnam"])
+proctabord <- sort(proctab)
+procord <- c()
+smallbig <- 0
+while(length(proctabord) > 0){
+  if(smallbig == 0){
+    procord <- c(procord, names(proctabord)[1])
+    proctabord <- proctabord[-1]
+  }
+  if(smallbig == 1){
+    procord <- c(procord, names(proctabord)[length(proctabord)])
+    proctabord <- proctabord[-length(proctabord)]
+  }
+  smallbig <- 1 - smallbig
+}
+inds.swap <- which(procord %in% c("Intraperitoneal glucose tolerance test (IPGTT)", "Heart Weight"))
+procord[inds.swap] <- procord[rev(inds.swap)]
+procord[]
+phord <- unique(phmap[order(match(phmap$procnam, procord)), "ph"])
+Data_all$impc$phord <- phord
+Data_all$impc$procord <- procord
+
+
 saveRDS(Data_all, file = control$Data_all_file)
+
+
 

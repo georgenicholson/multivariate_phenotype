@@ -24,7 +24,7 @@ get_control_parameters_mv <- function(control = list()) {
   
   defaults$prior.sd.on.unobserved.thetahat <- 10
   defaults$nfac <- 20
-  defaults$facnam <- paste("f", 1:defaults$nfac, sep = ".")
+  defaults$facnam <- paste("fac", 1:defaults$nfac, sep = "_")
   defaults$omegaseq <- exp((-10):10 * log(2))
   defaults$rank_deficient_R_eps <- .05
   
@@ -43,15 +43,13 @@ get_control_parameters_mv <- function(control = list()) {
   # defaults$var.in.name.ed <- c("N", "P", "EDmeth", "EDtol", "nSig", "subsamseed", "Data")
   defaults$default_parameters <- defaults$default_parameters <- list()
   defaults$default_parameters$impc <- list(N = 2000, P = 148, N_demo = 200, P_demo = 20,
-                                  variables_in_filename_MVphen = defaults$variables_in_filename_MVphen,
-                                  variables_in_filename_mash = defaults$variables_in_filename_mash,
-                                  variables_in_filename_XD = defaults$variables_in_filename_XD)
+                                           variables_in_filename_MVphen = defaults$variables_in_filename_MVphen,
+                                           variables_in_filename_mash = defaults$variables_in_filename_mash,
+                                           variables_in_filename_XD = defaults$variables_in_filename_XD)
   defaults$default_parameters$eqtl <- list(N = 5000, P = 44, N_demo = 200, P_demo = 20,
-                                  variables_in_filename_MVphen = defaults$variables_in_filename_MVphen,
-                                  variables_in_filename_mash = defaults$variables_in_filename_mash,
-                                  variables_in_filename_XD = defaults$variables_in_filename_XD)
-
-  
+                                           variables_in_filename_MVphen = defaults$variables_in_filename_MVphen,
+                                           variables_in_filename_mash = defaults$variables_in_filename_mash,
+                                           variables_in_filename_XD = defaults$variables_in_filename_XD)
   
   ###############################################
   # Our MVphen specific parameters
@@ -80,6 +78,12 @@ get_control_parameters_mv <- function(control = list()) {
   # Set RNG
   RNGkind(kind = "Mersenne-Twister", normal.kind =  "Inversion", sample.kind = "Rejection")
   
+  #########################################
+  # Heatmap colours
+  # defaults$heat_col_palette <- c(rgb(0, 0, 1, alpha = seq(1, 0, len = 500)), rgb(1, 0, 0, alpha = seq(0, 1, len = 500)))
+  # defaults$na_col <- grey(.5)
+  defaults$heat_col_palette <- rainbow(n = 1000, start = 0, end = .66)[1000:1]
+  
   #####################################################################
   # Directory structure
   defaults$data_dir <- "data"
@@ -88,21 +92,29 @@ get_control_parameters_mv <- function(control = list()) {
   defaults$methods_comp_dir <- paste0(defaults$output_dir, "/methods_comparison")
   defaults$train_test_samples_dir <- paste0(defaults$output_dir, "/train_test_splits")
   # output_dir <- paste0(base.dir, "/RData_files/mv_results")
-
+  defaults$figure_dir <- "figures"
+  # defaults$text_numbers_dir <- "text_numbers"
+  defaults$dropbox_figure_dir <- "C:/Users/nicho/Dropbox/Apps/Overleaf/Illuminating the mammalian genome with multivariate phenotype analysis/revision_figures"
+  defaults$dropbox_text_numbers_dir <- "C:/Users/nicho/Dropbox/Apps/Overleaf/Illuminating the mammalian genome with multivariate phenotype analysis/revision_text_numbers"
+  
+  
   #####################################################################
   # File names
   # defaults$file.runtab <- paste0(defaults$output_dir, "/runtab.RData")
   defaults$file.compl <- paste0(defaults$global_res_dir, "/global_compl.RDS")
   defaults$file.resl.comp <- paste0(defaults$global_res_dir, "/global_reslcomp.RDS")
+  defaults$file.resll <- paste0(defaults$global_res_dir, "/resll_comb.RDS")
   defaults$file.resl.comp.fac <- paste0(defaults$global_res_dir, "/global_reslcompfac.RDS")
   defaults$file.objl <- paste0(defaults$global_res_dir, "/global_objl.RDS")
+  defaults$file.resimp <- paste0(defaults$global_res_dir, "/resimp_comb.RDS")
+  defaults$file_raw_factor_results <- paste0(defaults$global_res_dir, "/raw_factor_results.RDS")
   defaults$Data_all_file <- file.path(defaults$data_dir, "Data_all.RDS") 
   # defaults$file.glob.res <- paste0(defaults$global_res_dir, "/global_eb_results.RData")
   # defaults$file.glob.loadings <- paste0(defaults$global_res_dir, "/global_eb_loadings.RData")
   # defaults$file.go.results <- paste0(defaults$global_res_dir, "/global_go_results.RData")
   # defaults$file.ebi.impc.results <- paste0(processed.data.dir, "/preprocessed_ebi_impc_results_v11.RData")
   # meth.comp.output.dir <- paste0(output_dir, "/meth_comp")
-
+  
   control_out <- control
   for(par_input in names(defaults)) {
     if(!par_input %in% names(control)) {
