@@ -28,6 +28,10 @@ get_control_parameters_mv <- function(control = list()) {
   defaults$omegaseq <- exp((-10):10 * log(2))
   defaults$rank_deficient_R_eps <- .05
   
+  
+  defaults$mv_meth_nam_use <- "impc_MVphen_nSig_1_K_20"
+  
+  
   ########################################
   # Variables to be included in filename
   # defaults$variables_in_filename_MVphen <- c("Data", "Meth", "N", "P", "subsamseed", "nSig", "MVphen_K")

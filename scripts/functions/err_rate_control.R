@@ -1,3 +1,21 @@
+# control = control
+# resl = resl.err.rates[!names(resl.err.rates) %in% c("uv", "uv.ss")]
+# err.rate.meth = "perm"
+# sep.imp.thresh = F
+# test.stat = "lfsr" 
+# linemap = Data_all$impc$linemap
+# reflinemap = Data_all$impc$reflinemap
+# phmap = Data_all$impc$phmap
+# cenmap = Data_all$impc$cenmap
+# Yhat = Data_all$impc$Y_raw
+# use.upper.fp.est = F
+# control.level = c("line.fdr", "line.fwer", "phcen.fdr")[1]
+# err.thresh = .05
+# centre.specific.thresh = F
+# p.complete.null.true = 1
+# p.test.null.true = 1
+
+
 ########################################
 #Need to fix this function to have arguments for all variables used
 # err.rate.meth = "perm"; calibrate = F; sep.imp.thresh = T; test.stat = c("z", "lfsr")[1]
@@ -326,12 +344,28 @@ err.rate.control <- function(control,
   bootmat[] <- sample(all.null.lines, length(all.null.lines) * B, replace = T)
   bootmat.true[] <- sample(all.true.lines, length(all.true.lines) * B, replace = T)
   namv <- paste(methv, err.rate.meth, "signsig", sep = ".")
-  null.line.nhit.mat <- t(sapply(all.null.lines, function(genoc) colSums(resimp0[resimp0$geno == genoc, namv] != 0, na.rm = T)))
-  null.line.ntest.mat <- t(sapply(all.null.lines, function(genoc) colSums(!is.na(resimp0[resimp0$geno == genoc, namv]))))
-  true.line.nhit.mat.imp <- t(sapply(all.true.lines, function(genoc) colSums(resimp1[resimp1$geno == genoc & resimp1$imputed, namv] != 0, na.rm = T)))
-  true.line.ntest.mat.imp <- t(sapply(all.true.lines, function(genoc) colSums(!is.na(resimp1[resimp1$geno == genoc & resimp1$imputed, namv]))))
-  true.line.nhit.mat.nonimp <- t(sapply(all.true.lines, function(genoc) colSums(resimp1[resimp1$geno == genoc & !resimp1$imputed, namv] != 0, na.rm = T)))
-  true.line.ntest.mat.nonimp <- t(sapply(all.true.lines, function(genoc) colSums(!is.na(resimp1[resimp1$geno == genoc & !resimp1$imputed, namv]))))
+
+
+  null.line.nhit.mat <- as.matrix(sapply(all.null.lines, function(genoc) 
+    colSums(resimp0[which(resimp0$geno == genoc), namv, drop = F] != 0, na.rm = T)))
+  null.line.ntest.mat <- as.matrix(sapply(all.null.lines, function(genoc) 
+    colSums(!is.na(resimp0[which(resimp0$geno == genoc), namv, drop = F]))))
+  true.line.nhit.mat.imp <- as.matrix(sapply(all.true.lines, function(genoc) 
+    colSums(resimp1[which(resimp1$geno == genoc & resimp1$imputed), namv, drop = F] != 0, na.rm = T)))
+  true.line.ntest.mat.imp <- as.matrix(sapply(all.true.lines, function(genoc) 
+    colSums(!is.na(resimp1[which(resimp1$geno == genoc & resimp1$imputed), namv, drop = F]))))
+  true.line.nhit.mat.nonimp <- as.matrix(sapply(all.true.lines, function(genoc) 
+    colSums(resimp1[which(resimp1$geno == genoc & !resimp1$imputed), namv, drop = F] != 0, na.rm = T)))
+  true.line.ntest.mat.nonimp <- as.matrix(sapply(all.true.lines, function(genoc) 
+    colSums(!is.na(resimp1[which(resimp1$geno == genoc & !resimp1$imputed), namv, drop = F]))))
+  if (length(namv) > 1) {
+    null.line.nhit.mat <- t(null.line.nhit.mat)
+    null.line.ntest.mat <- t(null.line.ntest.mat)
+    true.line.nhit.mat.imp <- t(true.line.nhit.mat.imp)
+    true.line.ntest.mat.imp <- t(true.line.ntest.mat.imp)
+    true.line.nhit.mat.nonimp <- t(true.line.nhit.mat.nonimp)
+    true.line.ntest.mat.nonimp <- t(true.line.ntest.mat.nonimp)
+  }
   dimnames(true.line.nhit.mat.imp) <- dimnames(true.line.ntest.mat.imp) <- 
     dimnames(true.line.nhit.mat.nonimp) <- dimnames(true.line.ntest.mat.nonimp) <- list(all.true.lines, methv)
   dimnames(null.line.nhit.mat) <- dimnames(null.line.ntest.mat) <- list(all.null.lines, methv)

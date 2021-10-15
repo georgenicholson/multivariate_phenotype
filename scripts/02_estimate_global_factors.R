@@ -18,6 +18,8 @@ objl <- readRDS(file = control$file.objl)
 
 resl.comp.fac <- list()
 Data <- "impc"
+
+
 namc <-  "impc_MVphen_nSig_1_K_20"
 fac.meth <- "varimax"
 n_subsamples <- dim(compl[[namc]]$mnarr)[3]
