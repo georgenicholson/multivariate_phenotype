@@ -1,41 +1,25 @@
-rm(list = ls())
-reflines.plot.dir <- "X:/projects/impc_mv_analysis/plots/impc_mv_paper_plots/ref_lines_temp"
-dir.create(reflines.plot.dir, showWarnings = F)
 Data <- "impc"
-source("X:/projects/impc_mv_analysis/R_files/impc_mv_parameters.R")
-load(file = paste0(global.res.dir, "/resimp_comb.RData"))
-load(file = paste0(global.res.dir, "/resll_comb.RData"))
-load(file = uv.results.Y.S)
-
-# resl <- resl.comp
-# resl$eb <- resl[[mv.meth.nam.use]]
-
-# resl$eb <- resll$perm[[mv.meth.nam.use]]
-
-# testl <- list()
-# for(i in 1:NROW(phmap)) testl[[i]] <- grep(phmap$nam[i], phmap$nam)
-# names(testl) <- phmap$nam
-# testl
+resimp <- readRDS(file = control$file.resimp)
 
 ####################################################
 #Reference lines numbers for text
-resimp0.imp <- resimp[resimp$line.type == nam.negcon & resimp$imputed, ]
-resimp1.imp <- resimp[resimp$line.type == nam.truemut & resimp$imputed, ]
+resimp0.imp <- resimp[resimp$line.type == control$control$nam.negcon & resimp$imputed, ]
+resimp1.imp <- resimp[resimp$line.type == control$control$nam.truemut & resimp$imputed, ]
 glob.fdr.imp <- mean(abs(resimp0.imp$eb.t) > resimp0.imp$eb.th.final) / 
   mean(abs(resimp1.imp$eb.t) > resimp1.imp$eb.th.final)
-resimp0.non <- resimp[resimp$line.type == nam.negcon & !resimp$imputed, ]
-resimp1.non <- resimp[resimp$line.type == nam.truemut & !resimp$imputed, ]
+resimp0.non <- resimp[resimp$line.type == control$nam.negcon & !resimp$imputed, ]
+resimp1.non <- resimp[resimp$line.type == control$nam.truemut & !resimp$imputed, ]
 glob.fdr.non <- mean(abs(resimp0.non$eb.t) > resimp0.non$eb.th.final) / 
   mean(abs(resimp1.non$eb.t) > resimp1.non$eb.th.final)
 
-matl <- resll$perm[[mv.meth.nam.use]]$ref.lines$matl
+matl <- resll$perm[[control$mv_meth_nam_use]]$ref.lines$matl
 matl$pre <- resll$perm$uv$ref.lines$matl$post
 str(matl)
 matl.sig <- lapply(matl, function(M){M[abs(M) < 1] <- 0; sign(M)})
 matl.sig.ord <- lapply(matl.sig, function(M)t(apply(M, 1, function(v) sort(v, decreasing = T))))
-tabl <- resll$perm[[mv.meth.nam.use]]$ref.lines$tabl
+tabl <- resll$perm[[control$mv_meth_nam_use]]$ref.lines$tabl
 
-fdr.ests <- resll$perm[[mv.meth.nam.use]]$ref.lines$fdr.ests
+fdr.ests <- resll$perm[[control$mv_meth_nam_use]]$ref.lines$fdr.ests
 fdr.ests$pre <- resll$perm$uv$ref.lines$fdr.ests$post
 
 
@@ -46,23 +30,22 @@ for(i in 1:length(fdr.ests)){
   loomv.uv.ci <- paste(loomv.uv.ci.numv[1], "\\% (95\\% CI: ", loomv.uv.ci.numv[2], "\\% - ", loomv.uv.ci.numv[3], "\\%)", sep = "")
   save.text <- paste("reflines.fdr.ci.", names(fdr.ests)[i], sep = "")
   for(numc in save.text)
-    write.table(loomv.uv.ci, file = paste(revision.text.numbers, "/", save.text, ".txt", sep = ""),
+    write.table(loomv.uv.ci, file = paste(control$dropbox_text_numbers_dir, "/", save.text, ".txt", sep = ""),
                 col.names = F, row.names = F, quote = F)
 }
-
 #global concordance/discordance
 ref.lines.concordant.n <- tabl$post["-1", "-1"] + tabl$post["1", "1"]
 ref.lines.discordant.n <- tabl$post["-1", "1"] + tabl$post["1", "-1"]
 save.num <- c("ref.lines.concordant.n", "ref.lines.discordant.n")
 for(numc in save.num)
-  write.table(prettyNum(eval(as.name(numc)), big.mark = ","), file = paste(revision.text.numbers, "/", numc, ".txt", sep = ""),
+  write.table(prettyNum(eval(as.name(numc)), big.mark = ","), file = paste(control$dropbox_text_numbers_dir, "/", numc, ".txt", sep = ""),
               col.names = F, row.names = F, quote = F)
 
 
 ####################################################
 #Reference lines concordance scatter
 fnamc <- "ref_lines_z_scatter.jpg"
-jpeg(paste(reflines.plot.dir, "/", fnamc, sep = ""), 9, 9, units = "in", res = 500)
+jpeg(paste(control$figure_dir, "/", fnamc, sep = ""), 9, 9, units = "in", res = 500)
 par(mfrow = c(2, 2), oma = c(3, 2, 1, 1), mar = c(3, 3, 3, 3))
 namv <- c("pre", "postcomp", "postimp", "postimpcomp")
 for(namc in namv){
@@ -112,8 +95,8 @@ for(namc in namv){
   # mtext(side = 3, text = fdrlab, line = 1.5, cex = .75)
 }
 dev.off()
-file.copy(from = paste(reflines.plot.dir, "/", fnamc, sep = ""),
-          to = paste(revision.paper.figures, "/", fnamc, sep = ""), overwrite = TRUE)
+file.copy(from = paste(control$figure_dir, "/", fnamc, sep = ""),
+          to = paste(control$dropbox_figure_dir, "/", fnamc, sep = ""), overwrite = TRUE)
 
 
 
@@ -123,8 +106,8 @@ load(procord.file)
 graphics.off()
 tl.pre <- resll$perm$uv$ref.lines$tl
 thl.pre <- resll$perm$uv$ref.lines$thl
-tl.post <- resll$perm[[mv.meth.nam.use]]$ref.lines$tl
-thl.post <- resll$perm[[mv.meth.nam.use]]$ref.lines$thl
+tl.post <- resll$perm[[control$mv_meth_nam_use]]$ref.lines$tl
+thl.post <- resll$perm[[control$mv_meth_nam_use]]$ref.lines$thl
 
 str(tl.pre)
 nlin <- length(tl.pre)
@@ -134,7 +117,7 @@ names(tl.pre)
 big.mar <- 1.5
 small.mar <- .5
 fnamc <- "ref_lines_heatmap.jpg"
-jpeg(paste(reflines.plot.dir, "/", fnamc, sep = ""), 12, 18, units = "in", res = 800)
+jpeg(paste(control$figure_dir, "/", fnamc, sep = ""), 12, 18, units = "in", res = 800)
 layout(matrix(1:(2 * nlin), 1), width = rep(nlinrep, each = 2) + big.mar)
 par(oma = c(6, 22, 0, 20))
 martop <- 10
@@ -190,15 +173,15 @@ image(z = as.matrix(1:1000), x = seq(-1, 1, len = 1000), y = 1, col = rain, xaxt
 axis(side = 3, las = 2, cex.axis = cexax, labels = c("< -1.0", -0.5, 0.0, 0.5, "> 1.0"), at = seq(-1, 1, by = .5), las = 0)
 mtext(side = 3, text = expression(italic(tilde(z))), line = 2, cex = cexax, las = 0)
 dev.off()
-file.copy(from = paste(reflines.plot.dir, "/", fnamc, sep = ""),
-          to = paste(revision.paper.figures, "/", fnamc, sep = ""), overwrite = TRUE)
+file.copy(from = paste(control$figure_dir, "/", fnamc, sep = ""),
+          to = paste(control$dropbox_figure_dir, "/", fnamc, sep = ""), overwrite = TRUE)
 
 
 
 #
 
-hom.z <- (resll$perm[[mv.meth.nam.use]]$het.hom$tl$het.hom / resll$perm[[mv.meth.nam.use]]$het.hom$thl$het.hom)[, 1]
-het.z <- (resll$perm[[mv.meth.nam.use]]$het.hom$tl$het.hom / resll$perm[[mv.meth.nam.use]]$het.hom$thl$het.hom)[, 2]
+hom.z <- (resll$perm[[control$mv_meth_nam_use]]$het.hom$tl$het.hom / resll$perm[[control$mv_meth_nam_use]]$het.hom$thl$het.hom)[, 1]
+het.z <- (resll$perm[[control$mv_meth_nam_use]]$het.hom$tl$het.hom / resll$perm[[control$mv_meth_nam_use]]$het.hom$thl$het.hom)[, 2]
 hom.z.sign <- sign(hom.z) * (abs(hom.z) > 1)
 het.z.sign <- sign(het.z) * (abs(het.z) > 1)
 tabhethom <- table(hom.z.sign, het.z.sign)
@@ -212,13 +195,13 @@ loomv.uv.ci.numv <- formatC(unlist(fdrc) * 100, format = "f", digits = 1)
 loomv.uv.ci <- paste(loomv.uv.ci.numv[1], "\\% (95\\% CI: ", loomv.uv.ci.numv[2], "\\% - ", loomv.uv.ci.numv[3], "\\%)", sep = "")
 save.text <- "hethom.fdr.ci"
 for(numc in save.text)
-  write.table(loomv.uv.ci, file = paste(revision.text.numbers, "/", save.text, ".txt", sep = ""), 
+  write.table(loomv.uv.ci, file = paste(control$dropbox_text_numbers_dir, "/", save.text, ".txt", sep = ""), 
               col.names = F, row.names = F, quote = F)
 
 
 
 fnamc <- "hethom_scatter.jpg"
-jpeg(paste(reflines.plot.dir, "/", fnamc, sep = ""), 9, 9, units = "in", res = 500)
+jpeg(paste(control$figure_dir, "/", fnamc, sep = ""), 9, 9, units = "in", res = 500)
 par(mfrow = c(1, 1), oma = c(3, 2, 1, 1), mar = c(3, 3, 3, 3))
 ntab <- t(tabhethom)# table(het.z.sign, hom.z.sign)
 ptab <- ntab / sum(ntab)
@@ -246,8 +229,8 @@ numv <- formatC(c(fdrci[[1]], fdrci[[2]]) * 100, format = "f", digits = 1)
 fdrlab <- paste("Discordance-implied FDR ", numv[1], "% (", numv[2], "% - ", numv[3], "%)", sep = "")
 mtext(side = 3, text = fdrlab, line = .5, cex = 1)
 dev.off()
-file.copy(from = paste(reflines.plot.dir, "/", fnamc, sep = ""),
-          to = paste(revision.paper.figures, "/", fnamc, sep = ""), overwrite = TRUE)
+file.copy(from = paste(control$figure_dir, "/", fnamc, sep = ""),
+          to = paste(control$dropbox_figure_dir, "/", fnamc, sep = ""), overwrite = TRUE)
 
 
 #global concordance/discordance
@@ -255,7 +238,7 @@ hethom.concordant.n <- tabhethom["-1", "-1"] + tabhethom["1", "1"]
 hethom.discordant.n <- tabhethom["-1", "1"] + tabhethom["1", "-1"]
 save.num <- c("hethom.concordant.n", "hethom.discordant.n")
 for(numc in save.num)
-  write.table(prettyNum(eval(as.name(numc)), big.mark = ","), file = paste(revision.text.numbers, "/", numc, ".txt", sep = ""), 
+  write.table(prettyNum(eval(as.name(numc)), big.mark = ","), file = paste(control$dropbox_text_numbers_dir, "/", numc, ".txt", sep = ""), 
               col.names = F, row.names = F, quote = F)
 
 
@@ -265,7 +248,7 @@ het.hitrate <- mean(het.z.sign != 0)
 save.num1 <- c("hom.hitrate", "het.hitrate")
 for(numc in save.num1)
   write.table(formatC(eval(as.name(numc)) * 100, format = "f", digits = 1), 
-              file = paste(revision.text.numbers, "/", numc, ".txt", sep = ""), 
+              file = paste(control$dropbox_text_numbers_dir, "/", numc, ".txt", sep = ""), 
               col.names = F, row.names = F, quote = F)
 
 
@@ -332,8 +315,8 @@ if(extra.plots){
   #mean(f <= ith, na.rm = T)
   
   #boxplot(resimp$mv.mn ~ resimp$cen)
-  cenmnmad = sapply(unique(resimp$cen), function(cenc) mad(resimp[resimp$cen == cenc & resimp$line.type == nam.truemut, "mv.mn"], na.rm = T))
-  censdmad = sapply(unique(resimp$cen), function(cenc) mad(resimp[resimp$cen == cenc & resimp$line.type == nam.truemut, "mv.sd"], na.rm = T))
+  cenmnmad = sapply(unique(resimp$cen), function(cenc) mad(resimp[resimp$cen == cenc & resimp$line.type == control$nam.truemut, "mv.mn"], na.rm = T))
+  censdmad = sapply(unique(resimp$cen), function(cenc) mad(resimp[resimp$cen == cenc & resimp$line.type == control$nam.truemut, "mv.sd"], na.rm = T))
   cenmnmad
   censdmad
   
@@ -357,7 +340,7 @@ if(extra.plots){
   save.tab <- c("uv_mv_prop_table")
   for(numc in save.tab)
     write.table(formatC(100 * ptab[i, j], format = "f", digits = 2), 
-                file = paste(revision.text.numbers, "/", numc, ".txt", sep = ""), 
+                file = paste(control$dropbox_text_numbers_dir, "/", numc, ".txt", sep = ""), 
                 col.names = F, row.names = F, quote = F)
   
   ##  
@@ -411,10 +394,10 @@ if(extra.plots){
   sum(tab.post.comp)
   sum(tab.pre)
   #compare distribution of t-stats for imputed vs non-imputed
-  summary(resimp$mv.t[!resimp$imputed & resimp$line.type == nam.negcon])
-  summary(resimp$mv.t[resimp$imputed & resimp$line.type == nam.negcon])
-  summary(resimp$mv.t[!resimp$imputed & resimp$line.type == nam.truemut])
-  summary(resimp$mv.t[resimp$imputed & resimp$line.type == nam.truemut])
+  summary(resimp$mv.t[!resimp$imputed & resimp$line.type == control$nam.negcon])
+  summary(resimp$mv.t[resimp$imputed & resimp$line.type == control$nam.negcon])
+  summary(resimp$mv.t[!resimp$imputed & resimp$line.type == control$nam.truemut])
+  summary(resimp$mv.t[resimp$imputed & resimp$line.type == control$nam.truemut])
   
   
   table(substr(rownames(postpair[(postpair[, 1] == 1 & postpair[, 2] == -1) | (postpair[, 1] == -1 & postpair[, 2] == 1), ]), 1, 8))
@@ -484,7 +467,7 @@ if(extra.plots){
 # par(mfrow = c(3, 3))
 # for(cenc in cenmap$nam){
 #   try({
-#     tlook <- resimp[resimp$cenlong == cenc & resimp$line.type == c("negCon", nam.truemut)[1], "uv.t"]
+#     tlook <- resimp[resimp$cenlong == cenc & resimp$line.type == c("negCon", control$nam.truemut)[1], "uv.t"]
 #     hist(tlook, main = cenc)
 #     print(cenc)
 #     print(mean(abs(tlook) > 5, na.rm = T))
@@ -519,7 +502,7 @@ if(extra.plots){
 # # resl <- err.rate.out$resl
 # # resimp <- err.rate.out$resimp
 # # resimp0 <- resimp[resimp$line.type == "negConCheck", ]
-# # resimp1 <- resimp[resimp$line.type == nam.truemut, ]
+# # resimp1 <- resimp[resimp$line.type == control$nam.truemut, ]
 # # sd.null.non <- sd.null.non.uv <- sd.null.imp <- sig.null.imp <- sig.null.non <- sig.null.non.uv <- 
 # #   sig.true.imp <- sig.true.non <- sig.true.non.uv <- c()
 # # for(cenc in cennamun){
@@ -547,7 +530,7 @@ if(extra.plots){
 # phen.un <- unique(resimp$ph)
 # # phen.un <- phen.un[!phen.un %in% paste0("f.", 1:nfac)]
 # resimp <- resimp[resimp$ph %in% phen.un, ]
-# resimp <- resimp[resimp$line.type == nam.truemut, ]
+# resimp <- resimp[resimp$line.type == control$nam.truemut, ]
 # resimp$uv.sig <- abs(resimp$uv.perm.signsig)
 # resimp$eb.sig <- abs(resimp$eb.perm.signsig)
 # resimp$eb.t <- resimp$eb.t
@@ -591,7 +574,7 @@ if(extra.plots){
 #     namc = paste(linc, zyg, sep = "_")
 #     gen.shv = ref[ref$gene_symbol == linc, "genotype_id"]
 #     # cen.gen <- resimp[match(paste(gen.shv, zyg, sep = "_"), resimp$geno), "cenlong"]
-#     resc = resimp[resimp$zyg == zyg & resimp$line.type == nam.truemut, ]
+#     resc = resimp[resimp$zyg == zyg & resimp$line.type == control$nam.truemut, ]
 #     genv = na.omit(resc[match(gen.shv, resc$geno.sh), "geno"])
 #     mn.post = se.post = t.post = th.post = mn.f = se.f = mn.pre = se.pre = t.pre = th.pre = NULL
 #     if(length(genv) <= 1)

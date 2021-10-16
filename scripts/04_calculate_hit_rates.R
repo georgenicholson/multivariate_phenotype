@@ -31,7 +31,7 @@ objl <- readRDS(file = control$file.objl)
 
 resl.err.rates.comb <- c(resl.comp[grepl(Data, names(resl.comp)) | names(resl.comp) == "uv"])
                          # list(varimax = resl.comp.fac[[mv.meth.nam.use]]))
-split.use <- 11
+split.use <- 1
 resl.err.rates.one.split <- c(list(uv = resl.comp$uv), lapply(compl[grepl(Data, names(compl))], 
                                    function(x) list(mn = x$mnarr[, , split.use], sd = x$sdarr[, , split.use], lfsr = x$lfsrarr[, , split.use])))
 for(err.data.type in c("comb", "single")[1]){

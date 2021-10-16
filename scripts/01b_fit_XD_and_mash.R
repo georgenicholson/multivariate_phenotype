@@ -1,12 +1,7 @@
 
 
-XDmeth <- Meth
-file.base.mash <- paste0(control$methods_comp_dir, "/", paste(paste(control$variables_in_filename, sapply(control$variables_in_filename, get), sep = "_"), collapse = "_"))
-file.base.XD <- paste0(control$methods_comp_dir, "/", paste(paste(control$variables_in_filename, sapply(control$variables_in_filename, get), sep = "_"), collapse = "_"))
-mash.resl.file.namc <- paste0(file.base.mash, "_mash_resl.RDS")
-mash.raw.results.file.namc <- paste0(file.base.mash, "_mash_raw_results.RDS")
-XD.output.file.namc <- paste0(file.base.XD, "_XD_output.RDS")
-XD.resl.file.namc <- paste0(file.base.XD, "_XD_resl.RDS")
+
+
 library(mashr)
 normU <- T
 use.pt.mass <- T
@@ -63,15 +58,14 @@ if(Meth == "XD"){
   }
   print("Running Extreme Deconvolution")
   replace.XD <- T
-  if(!file.exists(XD.output.file.namc) | replace.XD){
+  if(!file.exists(file_list$XD.output.file.namc) | replace.XD){
     XD.out <- mashr:::bovy_wrapper(data = mashdata.XD, Ulist_init = Ul.XD.init, tol = control$XD_conv_tol)
     Sigl.XD <- XD.out$Ulist <- lapply(XD.out$Ulist, function(M){ dimnames(M) <- list(phens_to_use, phens_to_use); M})
     pimat.XD <- t(XD.out$pi)
     XD_result <- list(XD.out = XD.out, mashdata.XD = mashdata.XD, Sigl.XD = Sigl.XD, pimat.XD = pimat.XD)
-    save(XD_result, file = XD.output.file.namc)
-    print(XD.output.file.namc)
+    saveRDS(XD_result, file = file_list$XD.output.file.namc)
   } else {
-    load(file = XD.output.file.namc)
+    XD_result <- readRDS(file = file_list$XD.output.file.namc)
   }
   Sigl.XD <- lapply(XD_result$Sigl.XD, function(M) M[phens_to_use, phens_to_use])
   omegaseq.XD <- 1
@@ -95,7 +89,7 @@ if(Meth == "XD"){
                                    pimat = pimat.XD, 
                                    omegaseq = omegaseq.XD)
   }
-  save(resl.store, file = XD.resl.file.namc)
+  saveRDS(resl.store, file = file_list$XD.resl.file.namc)
 }
 
 ##############################################
@@ -103,7 +97,7 @@ if(Meth == "XD"){
 if(Meth == "mash"){
   priorc <- c("nullbiased", "uniform")[1]
   replace.XD <- F
-  if(!file.exists(XD.output.file.namc) | replace.XD){
+  if(!file.exists(file_list$XD.output.file.namc) | replace.XD){
     print("Running Extreme Deconvolution")
     mashdata.XD <- mashdata.big.effects.for.XD
     Ul.XD.init <- Sigl.init.bigeff.mash
@@ -111,14 +105,12 @@ if(Meth == "mash"){
     Sigl.XD <- XD.out$Ulist <- lapply(XD.out$Ulist, function(M){ dimnames(M) <- list(phens_to_use, phens_to_use); M})
     pimat.XD <- t(XD.out$pi)
     XD_result <- list(XD.out = XD.out, mashdata.XD = mashdata.XD, Sigl.XD = Sigl.XD, pimat.XD = pimat.XD)
-    save(XD_result, file = XD.output.file.namc)
-    save(XD.out, mashdata.XD, Sigl.XD, pimat.XD, file = XD.output.file.namc)
-    print(XD.output.file.namc)
+    saveRDS(XD_result, file = file_list$XD.output.file.namc)
   } else {
     print("Loading Extreme Deconvolution results")
-    load(file = XD.output.file.namc)
+    XD_result <- readRDS(file = file_list$XD.output.file.namc)
   }
-  Ul.XD.use <- XD.out$Ulist
+  Ul.XD.use <- XD_result$XD.out$Ulist
   if(K2 > 1){
     sfa <- varimax(svd.Ztil$v[, 1:K2])
     sfa.F <- t(svd.Ztil$v[, 1:K2] %*% sfa$rotmat)
@@ -203,7 +195,7 @@ if(Meth == "mash"){
                                    pimat = t(mash.pimat.t.use), 
                                    omegaseq = mash.omegaseq)
   }
-  save(resl.store, file = mash.resl.file.namc)
+  saveRDS(resl.store, file = file_list$mash.resl.file.namc)
   mash_results <- list(res.mash.all.testing = res.mash.all.testing, res.mash.fitted.model = res.mash.fitted.model)
-  save(mash_results, file = mash.raw.results.file.namc)
+  saveRDS(mash_results, file = file_list$mash.raw.results.file.namc)
 }
