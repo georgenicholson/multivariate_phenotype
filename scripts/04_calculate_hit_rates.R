@@ -28,12 +28,46 @@ linemap <- Data_all$impc$linemap
 resl.comp <- readRDS(file = control$file.resl.comp)
 compl <- readRDS(file = control$file.compl)
 objl <- readRDS(file = control$file.objl)
+resl.comp.fac <- readRDS(file = control$file_raw_factor_results)
 
-resl.err.rates.comb <- c(resl.comp[grepl(Data, names(resl.comp)) | names(resl.comp) == "uv"])
-                         # list(varimax = resl.comp.fac[[mv.meth.nam.use]]))
+str(resl.comp.fac)
+
+resl.err.rates.comb <- c(resl.comp[grepl(Data, names(resl.comp)) | names(resl.comp) == "uv"],
+                          list(varimax = resl.comp.fac[[control$mv_meth_nam_use]]))
 split.use <- 1
 resl.err.rates.one.split <- c(list(uv = resl.comp$uv), lapply(compl[grepl(Data, names(compl))], 
                                    function(x) list(mn = x$mnarr[, , split.use], sd = x$sdarr[, , split.use], lfsr = x$lfsrarr[, , split.use])))
+
+# str(resl.err.rates.comb[[1]])
+# mean(resl.err.rates.comb$varimax$mn == 0)
+# 
+# tc_mash <- resl.err.rates.comb$impc_mash_nSig_1$mn / resl.err.rates.comb$impc_mash_nSig_1$sd
+# tc_mvphen <- resl.err.rates.comb$impc_MVphen_nSig_1_K_20$mn / resl.err.rates.comb$impc_MVphen_nSig_1_K_20$sd
+# tc_XD <- resl.err.rates.comb$impc_XD_nSig_1$mn / resl.err.rates.comb$impc_XD_nSig_1$sd
+# str(tc)
+# par(mfrow = c(2, 1))
+# boxplot(tc[1:1000, ])
+# boxplot(tc_mvphen[1:1000, ])
+# 
+# 
+# negcons <- Data_all$impc$linemap$geno[Data_all$impc$linemap$line.type == control$nam.negcon]
+# par(mfrow = c(3, 1))
+# boxplot(tc[negcons[1:2000], ])
+# abline(h = c(-2, 2))
+# boxplot(tc_mvphen[negcons[1:2000], ])
+# abline(h = c(-2, 2))
+# boxplot(tc_XD[negcons[1:2000], ])
+# abline(h = c(-2, 2))
+
+##########################################
+# Get table of analyses
+analysis_table <- create_table_of_analyses(control = control, check_status = T, run_type = "benchmark")
+
+file_list <- get_file_list(control = control, file_core_name = analysis_table[12, "file_core_name"], subsamseed = 1)
+
+mash_results <- readRDS(file = file_list$mash.raw.results.file.namc)
+str(mash_results)
+
 for(err.data.type in c("comb", "single")[1]){
   resl.err.rates <- switch(err.data.type, 
                            comb = resl.err.rates.comb, 
@@ -42,34 +76,28 @@ for(err.data.type in c("comb", "single")[1]){
   out.perm <- err.rate.control(control = control, 
                                resl = resl.err.rates,
                                err.rate.meth = "perm", 
-                               sep.imp.thresh = F,
                                test.stat = "z", 
                                linemap = Data_all$impc$linemap, 
                                reflinemap = Data_all$impc$reflinemap, 
                                phmap = Data_all$impc$phmap, 
                                cenmap = Data_all$impc$cenmap,
                                Yhat = Data_all$impc$Y_raw,
-                               use.upper.fp.est = F, 
                                control.level = c("line.fdr", "line.fwer", "phcen.fdr")[1],
                                err.thresh = .05, 
-                               centre.specific.thresh = F, 
                                p.complete.null.true = 1, 
                                p.test.null.true = 1)
   print(out.perm$restab)
   out.perm.lfsr <- err.rate.control(control = control, 
                                resl = resl.err.rates[!names(resl.err.rates) %in% c("uv", "uv.ss")],
                                err.rate.meth = "perm", 
-                               sep.imp.thresh = F,
                                test.stat = "lfsr", 
                                linemap = Data_all$impc$linemap, 
                                reflinemap = Data_all$impc$reflinemap, 
                                phmap = Data_all$impc$phmap, 
                                cenmap = Data_all$impc$cenmap,
                                Yhat = Data_all$impc$Y_raw,
-                               use.upper.fp.est = F, 
                                control.level = c("line.fdr", "line.fwer", "phcen.fdr")[1],
                                err.thresh = .05, 
-                               centre.specific.thresh = F, 
                                p.complete.null.true = 1, 
                                p.test.null.true = 1)
   
@@ -77,17 +105,14 @@ for(err.data.type in c("comb", "single")[1]){
   out.lfsr <- err.rate.control(control = control, 
                                     resl = resl.err.rates[!names(resl.err.rates) %in% c("uv", "uv.ss")],
                                     err.rate.meth = "lfsr", 
-                                    sep.imp.thresh = F,
                                     test.stat = "lfsr", 
                                     linemap = Data_all$impc$linemap, 
                                     reflinemap = Data_all$impc$reflinemap, 
                                     phmap = Data_all$impc$phmap, 
                                     cenmap = Data_all$impc$cenmap,
                                     Yhat = Data_all$impc$Y_raw,
-                                    use.upper.fp.est = F, 
                                     control.level = c("line.fdr", "line.fwer", "phcen.fdr")[1],
                                     err.thresh = .05, 
-                                    centre.specific.thresh = F, 
                                     p.complete.null.true = 1, 
                                     p.test.null.true = 1)
   print(out.lfsr$restab)

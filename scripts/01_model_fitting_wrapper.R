@@ -12,7 +12,7 @@ if("--args" %in% arguments){
     assign(argnam.in$nam[i], eval(call(argnam.in$coersion.fn[i], arguments[grep("--args", arguments) + i])))
 } else {
   run_type <- c("demo", "main", "benchmark", "test_benchmark")[3]
-  scen <- 14
+  scen <- 12
   subsamseed <- 6
 }
 
@@ -39,6 +39,7 @@ Data_all <- readRDS(file = control$Data_all_file)
 ##########################################
 # Get table of analyses
 analysis_table <- create_table_of_analyses(control = control, check_status = T, run_type = run_type)
+
 Data <- analysis_table$Data[scen]
 Meth <- analysis_table$Meth[scen]
 N <- analysis_table$N[scen]

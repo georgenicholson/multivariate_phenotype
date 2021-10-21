@@ -30,9 +30,10 @@ create_table_of_analyses <- function(control, check_status = T, run_type = c("de
                           n_subsamples = control$n_subsamples_benchmark,
                           stringsAsFactors = F)
     runtab[which(!grepl("MVphen", runtab$Meth)), "MVphen_K"] <- NA
-  
+    
+    
     #############################
-    # Filter runtab
+    # Filter and tweak runtab
     #############################
     runtab[runtab$Meth == "mash", c("nSig")] <- 1
     runtab[runtab$Data == "impc", "P"] <- control$default_parameters$impc$P
@@ -62,6 +63,11 @@ create_table_of_analyses <- function(control, check_status = T, run_type = c("de
       runtab$MVphen_K <- 5
     }
     runtab <- unique(runtab)
+    
+    # Increased n_subsamples for main analysis
+    runtab[runtab$N == 2000 & runtab$P == 148 & runtab$nSig == 1 & 
+             runtab$Meth == "MVphen" & runtab$MVphen_K == control$nfac, "n_subsamples"] <- control$n_subsamples_main
+    
   }  
   runtab
   

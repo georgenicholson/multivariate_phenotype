@@ -1,8 +1,7 @@
 # control = control
 # resl = resl.err.rates[!names(resl.err.rates) %in% c("uv", "uv.ss")]
-# err.rate.meth = "perm"
-# sep.imp.thresh = F
-# test.stat = "lfsr" 
+# err.rate.meth = "lfsr"
+# test.stat = "lfsr"
 # linemap = Data_all$impc$linemap
 # reflinemap = Data_all$impc$reflinemap
 # phmap = Data_all$impc$phmap
@@ -11,9 +10,10 @@
 # use.upper.fp.est = F
 # control.level = c("line.fdr", "line.fwer", "phcen.fdr")[1]
 # err.thresh = .05
-# centre.specific.thresh = F
 # p.complete.null.true = 1
 # p.test.null.true = 1
+
+
 
 
 ########################################
@@ -22,32 +22,27 @@
 err.rate.control <- function(control, 
                               resl, 
                               err.rate.meth = "perm", 
-                              sep.imp.thresh = F, 
                               test.stat = c("z", "lfsr")[1], 
                               linemap, 
                               reflinemap,
                               phmap = NULL, 
                               cenmap,
                               Yhat, 
-                              use.upper.fp.est = F, 
                               control.level = c("line.fdr", "line.fwer", "phcen.fdr")[1],
                               err.thresh = .05, 
-                              centre.specific.thresh = F, 
                               p.complete.null.true = 1, 
                               p.test.null.true = 1){
   methv <- names(resl)
   require(Hmisc)
+  fdr.th.seq.finemesh <- seq(0, 10, by = .01)
   ####################################################################################
   #Create resimp, update fields in resmat, copy fields from resmat to resimp
   ph.use.inc.fac <- unique(unlist(sapply(resl, function(x) colnames(x$mn), simplify = F)))
   lines.all <- linemap$geno#unique(unlist(sapply(resl, function(x) rownames(x$mn), simplify = F)))
-  all(lines.all %in% rownames(resl$mash_data$mn))
   resimp <- data.frame(ph = rep(ph.use.inc.fac, length(lines.all)), geno = rep(lines.all, each = length(ph.use.inc.fac)))
   resimp[, "cen"] <- linemap[match(resimp$geno, linemap$geno), "cen"]
-  # resimp[, "procnam"] <- phmap[match(resimp$ph, phmap$ph), "procnam"]
   resimp$line.type <- linemap[match(resimp$geno, linemap$geno), "line.type"]
   resimp$testid <- paste(resimp$cen, resimp$ph, resimp$geno, sep = "_")
-  # resimp <- resimp[!resimp$cen %in% cen.omit, ]
   resimp$cenlong <- cenmap[match(resimp$cen, cenmap$cen), "nam"]
   resimp$cenphen <- paste(resimp$cenlong, resimp$ph, sep = "_")
   resimp$imputed <- NA
@@ -66,17 +61,9 @@ err.rate.control <- function(control,
     cenphenun <- unique(resimp$cenphen[resimp$line.type == truekos.for.th.select])
     cennamun.sub <- unique(resimp$cenlong[which(resimp$line.type == truekos.for.th.select)])
     thdat <- resimp[match(cenphenun, resimp$cenphen), c("cenphen", "cenlong", "ph")]
-    resimpl <- lapply(cennamun.sub, function(cc) resimp[which(resimp$cenlong == cc), ])
-    names(resimpl) <- cennamun.sub
     for(methc in methv){#methc <- "mash"#
       ###########################
       #Thresh select
-      if(sep.imp.thresh){
-        imputed.list <- list(c(T), c(F))
-        # imputed.list <- list(0, 1, 2)
-      } else {
-        imputed.list <- list(c(T, F))
-      }
       cpnam <- paste(methc, "cenphen.th", sep = ".")
       cnam <- paste(methc, "cen.th", sep = ".")
       gnam <- paste(methc, "glob.th", sep = ".")
@@ -90,14 +77,7 @@ err.rate.control <- function(control,
         test.stat.mat <- qnorm(.5 + (1 - resl[[methc]]$lfsr) / 2) * sign(resl[[methc]]$mn)
         # test.stat.mat <- (1 / resl[[methc]]$lfsr) * sign(resl[[methc]]$mn)
       }
-      for(cenc in cennamun.sub)
-        resimpl[[cenc]][, tnam] <- NA
       resimp[, tnam] <- NA
-      for(cenc in cennamun.sub){
-        ph.availc <- which(resimpl[[cenc]]$ph %in% colnames(test.stat.mat))
-        resimpl[[cenc]][ph.availc, tnam] <- test.stat.mat[cbind(resimpl[[cenc]]$geno[ph.availc], resimpl[[cenc]]$ph[ph.availc])]
-        unique(resimpl[[cenc]]$geno[ph.availc][which(!resimpl[[cenc]]$geno[ph.availc] %in% rownames(test.stat.mat))])
-      }
       ph.availc <- which(resimp$ph %in% colnames(test.stat.mat))
       resimp[ph.availc, tnam] <- test.stat.mat[cbind(resimp$geno[ph.availc], resimp$ph[ph.availc])]
       if(control.level %in% c("line.fdr", "line.fwer")){
@@ -107,16 +87,14 @@ err.rate.control <- function(control,
         zmat.true <- zmat.true[rowMeans(is.na(zmat.true)) < 1, ]
         tmax0 <- apply(abs(zmat.null), 1, function(v) max(v, na.rm = T))
         tmax1 <- apply(abs(zmat.true), 1, function(v) max(v, na.rm = T))
-        fdr.th.seq.finemesh <- seq(0, 10, by = .01)
         prob.disc.false <- colMeans(outer(tmax0, fdr.th.seq.finemesh, '>'), na.rm = T)
         prob.disc <- colMeans(outer(tmax1, fdr.th.seq.finemesh, '>'), na.rm = T)
-        line.fdr.out <- switch(control.level, line.fdr = p.complete.null.true * prob.disc.false / prob.disc, line.fwer = prob.disc.false)
+        line.fdr.out <- switch(control.level, 
+                               line.fdr = p.complete.null.true * prob.disc.false / prob.disc, 
+                               line.fwer = prob.disc.false)
         resimp[, gnam] <- fdr.th.seq.finemesh[match(T, line.fdr.out < err.thresh)]
         resimp[, cnam] <- NA
         for(cenc in cennamun.sub){
-          # resimp.cen <- resimp[which(resimp$cenlong == cenc), ]
-          # trueko.t <- na.omit(resimp.cen[which(resimp.cen$line.type %in% truekos.for.th.select), tnam])
-          # negcon.t <- na.omit(resimp.cen[which(resimp.cen$line.type %in% controls.for.th.select), tnam])
           zmat.null <- test.stat.mat[linemap[linemap$line.type %in% controls.for.th.select & linemap$cenlong == cenc, "geno"], ]
           zmat.true <- test.stat.mat[linemap[linemap$line.type %in% truekos.for.th.select & linemap$cenlong == cenc, "geno"], ]
           zmat.null <- zmat.null[rowMeans(is.na(zmat.null)) < 1, ]
@@ -125,77 +103,15 @@ err.rate.control <- function(control,
           tmax1 <- apply(abs(zmat.true), 1, function(v) max(v, na.rm = T))
           prob.disc <- colMeans(outer(tmax1, fdr.th.seq.finemesh, '>'), na.rm = T)
           mat.neg <- outer(tmax0, fdr.th.seq.finemesh, '>')
-          if(use.upper.fp.est){
-            upper.prob.disc.false <- pmax(0, binconf(x = colSums(mat.neg, na.rm = T), n = colSums(!is.na(mat.neg)), alpha = .2)[, "Upper"])
-            line.fdr.out <- switch(control.level, line.fdr = p.complete.null.true * upper.prob.disc.false / prob.disc, line.fwer = upper.prob.disc.false)
-          } else {
-            prob.disc.false <- colMeans(mat.neg, na.rm = T)
-            line.fdr.out <- switch(control.level, line.fdr = p.complete.null.true * prob.disc.false / prob.disc, line.fwer = prob.disc.false)
-          }
-          # line.fdr.out <- upper.prob.disc.false / prob.disc
+          prob.disc.false <- colMeans(mat.neg, na.rm = T)
+          line.fdr.out <- switch(control.level, 
+                                 line.fdr = p.complete.null.true * prob.disc.false / prob.disc, 
+                                 line.fwer = prob.disc.false)
           resimp[which(resimp$cenlong == cenc), cnam] <- fdr.th.seq.finemesh[match(T, line.fdr.out < err.thresh)]
         }  
         # resimp[, fnam] <- pmax(resimp[, gnam], resimp[, cnam])
-        if(centre.specific.thresh){
-          resimp[, fnam] <- resimp[, cnam]
-        } else {
-          resimp[, fnam] <- resimp[, gnam]
-        }
+        resimp[, fnam] <- resimp[, gnam]
         resimp[, fnam][is.na(resimp[, fnam]) & !is.na(resimp[, tnam])] <- Inf
-      }
-      if(control.level == "phcen.fdr"){
-        for(imputed in imputed.list){
-          trueko.t <- na.omit(resimp[which(resimp$line.type %in% truekos.for.th.select & resimp$imputed %in% imputed), tnam])
-          negcon.t <- na.omit(resimp[which(resimp$line.type %in% controls.for.th.select & resimp$imputed %in% imputed), tnam])
-          mat.neg <- outer(abs(negcon.t), fdr.th.seq, '>')
-          if(use.upper.fp.est){
-            prob.disc.false <- pmax(0, binconf(x = colSums(mat.neg, na.rm = T), n = colSums(!is.na(mat.neg)))[, "Upper"])
-          } else {
-            prob.disc.false <- colMeans(mat.neg, na.rm = T)
-          }
-          prob.disc <- colMeans(outer(abs(trueko.t), fdr.th.seq, '>'), na.rm = T)
-          glob.fdr.out <- prob.disc.false / prob.disc
-          # glob.fdr.out <- colMeans(outer(abs(negcon.t), fdr.th.seq, '>'), na.rm = T) / 
-          #   colMeans(outer(abs(trueko.t), fdr.th.seq, '>'), na.rm = T)
-          thdat[, gnam] <- fdr.th.seq[match(T, glob.fdr.out < err.thresh)]
-          thdat[, cpnam] <- thdat[, cnam] <- NA
-          for(j in 1:nrow(thdat)){
-            cenc <- thdat$cenlong[j]
-            resimp.cenphen <- resimpl[[cenc]][which(resimpl[[cenc]]$ph == thdat$ph[j]), ]
-            trueko.t <- resimp.cenphen[which(resimp.cenphen$line.type %in% truekos.for.th.select & resimp.cenphen$imputed %in% imputed), tnam]
-            negcon.t <- resimp.cenphen[which(resimp.cenphen$line.type %in% controls.for.th.select & resimp.cenphen$imputed %in% imputed), tnam]
-            if(length(negcon.t) > 0 & length(trueko.t) > 0){
-              prob.disc.false <- colMeans(outer(abs(negcon.t), fdr.th.seq, '>'), na.rm = T)
-              prob.disc <- colMeans(outer(abs(trueko.t), fdr.th.seq, '>'), na.rm = T)
-              # fdr.out <- colMeans(outer(abs(negcon.t), fdr.th.seq, '>'), na.rm = T) / colMeans(outer(abs(trueko.t), fdr.th.seq, '>'), na.rm = T)
-              fdr.out <- prob.disc.false / prob.disc
-              thdat[j, cpnam] <- fdr.th.seq[match(T, fdr.out < err.thresh)]
-            }
-          }
-          for(cenc in cennamun.sub){
-            resimp.cen <- resimp[which(resimp$cenlong == cenc), ]
-            trueko.t <- na.omit(resimp.cen[which(resimp.cen$line.type %in% truekos.for.th.select & resimp.cen$imputed %in% imputed), tnam])
-            negcon.t <- na.omit(resimp.cen[which(resimp.cen$line.type %in% controls.for.th.select & resimp.cen$imputed %in% imputed), tnam])
-            mat.neg <- outer(abs(negcon.t), fdr.th.seq, '>')
-            if(use.upper.fp.est){
-              prob.disc.false <- pmax(0, binconf(x = colSums(mat.neg, na.rm = T), n = colSums(!is.na(mat.neg)))[, "Upper"])
-            } else {
-              prob.disc.false <- colMeans(mat.neg, na.rm = T)
-            }
-            prob.disc <- colMeans(outer(abs(trueko.t), fdr.th.seq, '>'), na.rm = T)
-            fdr.out <- prob.disc.false / prob.disc
-            # fdr.out[prob.disc == 0] <- 0
-            thdat[which(thdat$cenlong == cenc), cnam] <- fdr.th.seq[match(T, fdr.out < err.thresh)]
-          }
-          impinds <- which(resimp$imputed %in% imputed & !is.na(resimp[, tnam]))
-          resimp[impinds, gnam] <- thdat[1, gnam]
-          resimp[impinds, cnam] <- thdat[match(resimp$cenphen[impinds], thdat$cenphen), cnam]
-          resimp[impinds, cpnam] <- thdat[match(resimp$cenphen[impinds], thdat$cenphen), cpnam]
-          # resimp[impinds, fnam] <- pmax(resimp[impinds, gnam], resimp[impinds, cnam], resimp[impinds, cpnam])
-          # resimp[, fnam] <- pmax(resimp[, gnam], resimp[, cnam])
-          resimp[, fnam] <- resimp[, gnam]
-          resimp[, fnam][is.na(resimp[, fnam]) & !is.na(resimp[, tnam])] <- Inf
-        }
       }
       resimp[, signsignam] <- (abs(resimp[, tnam]) > resimp[, fnam]) * sign(resimp[, tnam])
       resl[[methc]]$signsig <- resl[[methc]]$t <- resl[[methc]]$th <- resl[[methc]]$mn
@@ -211,13 +127,13 @@ err.rate.control <- function(control,
       fnam <- paste(methc, "th.final", sep = ".")
       tnam <- paste(methc, "t", sep = ".")
       signsignam <- paste0(methc, ".", err.rate.meth, ".signsig")
-      # resimp[, paste(methc, err.rate.meth, "signsig", sep = ".")] <- NA
-      # resimp[, paste(methc, err.rate.meth, "signsig", sep = ".")] <- 
-      #   c((resl[[methc]][[err.rate.meth]][cbind(resimp$geno, resimp$ph)] < err.thresh) * 
-      #       sign(resl[[methc]]$mn[cbind(resimp$geno, resimp$ph)]))
-      resimp[, tnam] <- 1 / resl[[methc]][[err.rate.meth]][cbind(resimp$geno, resimp$ph)] * sign(resl[[methc]]$mn[cbind(resimp$geno, resimp$ph)])
-      resimp[, fnam] <- 1 / err.thresh
-      resimp[, signsignam] <- (resimp[, tnam] > resimp[, fnam]) * sign(resl[[methc]]$mn[cbind(resimp$geno, resimp$ph)])
+      # following line req'd as factors available only if methc == varimax
+      which_resimp_ph_in_resl <- which(resimp$ph %in% colnames(resl[[methc]][[err.rate.meth]]))
+      resimp[which_resimp_ph_in_resl, tnam] <- 1 / resl[[methc]][[err.rate.meth]][cbind(resimp$geno, resimp$ph)[which_resimp_ph_in_resl, ]] * 
+                                                sign(resl[[methc]]$mn[cbind(resimp$geno, resimp$ph)[which_resimp_ph_in_resl, ]])
+      resimp[which_resimp_ph_in_resl, fnam] <- 1 / err.thresh
+      resimp[which_resimp_ph_in_resl, signsignam] <- (resimp[which_resimp_ph_in_resl, tnam] > resimp[which_resimp_ph_in_resl, fnam]) * 
+                                              sign(resl[[methc]]$mn[cbind(resimp$geno, resimp$ph)[which_resimp_ph_in_resl, ]])
       resl[[methc]]$signsig <- resl[[methc]]$t <- resl[[methc]]$th <- resl[[methc]]$mn
       resl[[methc]]$signsig[] <- resl[[methc]]$t[] <- resl[[methc]]$th[] <- NA
       ph.availc <- which(resimp$ph %in% colnames(resl[[methc]]$signsig))
@@ -227,6 +143,10 @@ err.rate.control <- function(control,
     }
   }
 
+  
+  resimp$geno[!resimp$geno %in% rownames(resl[[methc]][[err.rate.meth]])]
+  resimp$ph[!resimp$ph %in% colnames(resl[[methc]][[err.rate.meth]])]
+  
   ########################################################
   #Extract reference lines results
   # reflinemap <- read.csv(paste0(base.dir, "/data_in/reference_line_genotypeIds.csv"))
@@ -397,7 +317,7 @@ err.rate.control <- function(control,
     bootmat.n.null.test[] <- null.line.ntest.mat[match(c(bootmat), rownames(null.line.ntest.mat)), methc]
     bootv <- colSums(bootmat.n.null.hit, na.rm = T) / colSums(bootmat.n.null.test, na.rm = T)
     pr.est <- mean(resimp1[, namc] != 0, na.rm = T)
-    fpr.ci <- c(fpr.est, quantile(bootv, c(ci.al, 1 - ci.al)))
+    fpr.ci <- c(fpr.est, quantile(bootv, c(ci.al, 1 - ci.al), na.rm = T))
     fdr.est <- min(c(1, p.test.null.true * fpr.est / pr.est))
     fdr.est[fpr.est == 0 & pr.est == 0] <- 0
     fpr.est.nonimp <- mean(resimp0[!resimp0$imputed, namc] != 0, na.rm = T)
@@ -409,15 +329,23 @@ err.rate.control <- function(control,
     pr.est.imp <- mean(resimp1[resimp1$imputed, namc] != 0, na.rm = T)
     fdr.est.imp <- min(c(1, p.test.null.true * fpr.est.imp / pr.est.imp))
     fdr.est.imp[fpr.est.imp == 0 & pr.est.imp == 0] <- 0
-    # mean(resimp1[!resimp1$imputed, namc] != 0, na.rm = T)
-    # fdr.est.imp <- mean(resimp0[resimp0$imputed, namc] != 0, na.rm = T) / 
-    #               mean(resimp1[resimp1$imputed, namc] != 0, na.rm = T)
-    restab.add <- data.frame(meth = methc, err.rate.meth = err.rate.meth, centre.specific.thresh = centre.specific.thresh, sep.imp.thresh = sep.imp.thresh,
-                             test.stat = test.stat, use.upper = use.upper.fp.est, 
-                             mvhitimp = hit.rate.imp, hit.rate.imp.ci.l = hit.rate.imp.ci[2], hit.rate.imp.ci.u = hit.rate.imp.ci[3], 
-                             mvhitnonimp = hit.rate.nonimp, hit.rate.nonimp.ci.l = hit.rate.nonimp.ci[2], hit.rate.nonimp.ci.u = hit.rate.nonimp.ci[3], 
-                             line.fdr.est = line.fdr.est, line.fdr.ci.l = line.fdr.ci[2], line.fdr.ci.u = line.fdr.ci[3], 
-                             fdr.est = fdr.est, fdr.ci.l = fdr.ci[2], fdr.ci.u = fdr.ci[3], fdr.est.imp = fdr.est.imp, fdr.est.nonimp = fdr.est.nonimp)
+    restab.add <- data.frame(meth = methc, 
+                             err.rate.meth = err.rate.meth,
+                             test.stat = test.stat, 
+                             mvhitimp = hit.rate.imp, 
+                             hit.rate.imp.ci.l = hit.rate.imp.ci[2], 
+                             hit.rate.imp.ci.u = hit.rate.imp.ci[3], 
+                             mvhitnonimp = hit.rate.nonimp, 
+                             hit.rate.nonimp.ci.l = hit.rate.nonimp.ci[2], 
+                             hit.rate.nonimp.ci.u = hit.rate.nonimp.ci[3], 
+                             line.fdr.est = line.fdr.est, 
+                             line.fdr.ci.l = line.fdr.ci[2], 
+                             line.fdr.ci.u = line.fdr.ci[3], 
+                             fdr.est = fdr.est, 
+                             fdr.ci.l = fdr.ci[2], 
+                             fdr.ci.u = fdr.ci[3], 
+                             fdr.est.imp = fdr.est.imp, 
+                             fdr.est.nonimp = fdr.est.nonimp)
     for(comp.type in comp.typev){
       fdr.ests.c <- resl[[methc]][[comp.type]]$fdr.ests
       restab.add[, paste0(comp.type, ".", names(fdr.ests.c))] <- sapply(fdr.ests.c, function(x) x$est)

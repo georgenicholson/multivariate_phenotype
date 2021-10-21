@@ -14,7 +14,7 @@ control <- get_control_parameters_mv()
 # Download data
 if (!"data/impc" %in% list.dirs(control$data_dir)) {
   temp <- tempfile()
-  download.file(url = "https://www.dropbox.com/s/wz6mg35n502au6a/multivariate_phenotype_paper_supporting_data.zip?dl=1", temp, mode = "wb")
+  download.file(url = "https://www.dropbox.com/s/hpsyomy7y9paxll/multivariate_phenotype_paper_supporting_data.zip?dl=1", temp, mode = "wb")
   unzip(temp, exdir = control$data_dir)
   unlink(temp)
 }
@@ -40,6 +40,7 @@ for (Data in c("eqtl", "impc")) {
     Data_all[[Data]]$reflinemap <- readRDS("data/impc/reflinemap.RDS")
     Data_all[[Data]]$phmap <- readRDS("data/impc/phmap.RDS")
     Data_all[[Data]]$cenmap <- readRDS("data/impc/cenmap.RDS")
+    Data_all[[Data]]$genemap <- readRDS("data/impc/genemap.RDS")
   }
   
   Data_all[[Data]]$Y_zeroed <- Data_all[[Data]]$Y_raw

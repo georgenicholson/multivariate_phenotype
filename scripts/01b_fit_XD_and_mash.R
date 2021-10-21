@@ -2,9 +2,7 @@
 
 
 
-library(mashr)
-normU <- T
-use.pt.mass <- T
+require(mashr)
 ############################################################
 # Get big effects covariance matrices for MASH
 if(Data == "impc"){
@@ -95,7 +93,6 @@ if(Meth == "XD"){
 ##############################################
 # Run MASH
 if(Meth == "mash"){
-  priorc <- c("nullbiased", "uniform")[1]
   replace.XD <- F
   if(!file.exists(file_list$XD.output.file.namc) | replace.XD){
     print("Running Extreme Deconvolution")
@@ -108,6 +105,8 @@ if(Meth == "mash"){
     saveRDS(XD_result, file = file_list$XD.output.file.namc)
   } else {
     print("Loading Extreme Deconvolution results")
+    print(file_list$XD.output.file.namc)
+    print(Data)
     XD_result <- readRDS(file = file_list$XD.output.file.namc)
   }
   Ul.XD.use <- XD_result$XD.out$Ulist
@@ -127,40 +126,31 @@ if(Meth == "mash"){
   cov.meth <- c("identity", "equal_effects", "simple_het")
   cov.meth <- c(cov.meth, "singletons")
   Ul.canon <- cov_canonical(mashdata.for.model.fitting, cov_methods = cov.meth)
-  mashmethv <- c("data", "canon")
   resl <- list()
-  for(mashmeth in mashmethv){
-    Ul.all <- list()
-    if("data" %in% mashmeth)
-      Ul.all <- c(Ul.all, Ul.data)
-    if("canon" %in% mashmeth)
-      Ul.all <- c(Ul.all, Ul.canon)
-    res.mash.fitted.model <- mash(data = mashdata.for.model.fitting, 
-                                  Ulist = Ul.all, 
-                                  outputlevel = 2, 
-                                  usepointmass = use.pt.mass,
-                                  prior = priorc, 
-                                  normalizeU = normU, 
-                                  add.mem.profile = F)
-    mashdata.all.testing <- mash_set_data(Bhat = Y_zeroed[sams_for_model_testing, phens_to_use], 
-                                          Shat = S_zeroed[sams_for_model_testing, phens_to_use], 
-                                          alpha = 0, 
-                                          V = R.init)
-    res.mash.all.testing <- mash(mashdata.all.testing, 
-                                 g = res.mash.fitted.model$fitted_g, 
-                                 fixg = T, 
-                                 outputlevel = 2, 
-                                 add.mem.profile = F)
-    dimnames(res.mash.all.testing$vloglik) <- list(sams_for_model_testing, "llik")
-    mashnam <- paste0("mash_", paste(mashmeth, collapse = "+"), "_prior_", priorc)
-    resl[[mashnam]] <- list(mn = res.mash.all.testing$result$PosteriorMean[sams_for_model_testing, phens_to_use],
-                            sd = res.mash.all.testing$result$PosteriorSD[sams_for_model_testing, phens_to_use],
-                            loglikv = res.mash.all.testing$vloglik,
-                            lfdr = res.mash.all.testing$result$lfdr[sams_for_model_testing, phens_to_use],
-                            lfsr = res.mash.all.testing$result$lfsr[sams_for_model_testing, phens_to_use],
-                            loglik = sum(res.mash.all.testing$vloglik[sams_for_lik_cross_val, ]))
-    names(resl[[mashnam]]$loglikv) <- sams_for_model_testing
-  }
+  mashmeth <- c("data", "canon")
+  Ul.all <- c(Ul.data, Ul.canon)
+  res.mash.fitted.model <- mash(data = mashdata.for.model.fitting, 
+                                Ulist = Ul.all, 
+                                outputlevel = 2, 
+                                add.mem.profile = F)
+  mashdata.all.testing <- mash_set_data(Bhat = Y_zeroed[sams_for_model_testing, phens_to_use], 
+                                        Shat = S_zeroed[sams_for_model_testing, phens_to_use], 
+                                        alpha = 0, 
+                                        V = R.init)
+  res.mash.all.testing <- mash(mashdata.all.testing, 
+                               g = res.mash.fitted.model$fitted_g, 
+                               fixg = T, 
+                               outputlevel = 2, 
+                               add.mem.profile = F)
+  dimnames(res.mash.all.testing$vloglik) <- list(sams_for_model_testing, "llik")
+  mashnam <- paste0("mash_", paste(mashmeth, collapse = "+"))
+  resl[[mashnam]] <- list(mn = res.mash.all.testing$result$PosteriorMean[sams_for_model_testing, phens_to_use],
+                          sd = res.mash.all.testing$result$PosteriorSD[sams_for_model_testing, phens_to_use],
+                          loglikv = res.mash.all.testing$vloglik,
+                          lfdr = res.mash.all.testing$result$lfdr[sams_for_model_testing, phens_to_use],
+                          lfsr = res.mash.all.testing$result$lfsr[sams_for_model_testing, phens_to_use],
+                          loglik = sum(res.mash.all.testing$vloglik[sams_for_lik_cross_val, ]))
+  names(resl[[mashnam]]$loglikv) <- sams_for_model_testing
   phnam.mash <- colnames(res.mash.fitted.model$result$PosteriorMean)
   mash.omegaseq <- res.mash.fitted.model$fitted_g$grid^2
   mash.n.om <- length(mash.omegaseq)

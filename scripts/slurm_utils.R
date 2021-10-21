@@ -31,12 +31,12 @@ for(dirc in c(control$output_dir, control$methods_comp_dir, control$global_res_d
 ##########################################
 # Get table of analyses
 analysis_table <- create_table_of_analyses(control = control, check_status = T, run_type = run_type)
-analysis_table <- analysis_table[order(analysis_table$Data, decreasing = TRUE), ]
+# analysis_table <- analysis_table[order(analysis_table$Data, decreasing = TRUE), ]
 scen_to_run <- 1:nrow(analysis_table)
 network_path_to_MVphen_git_repo <- "/mnt/x/projects/impc_mv_analysis/github_multivariate_phenotype/multivariate_phenotype"
-
+# network_path_to_MVphen_git_repo <- "//TW/Users/nicho/Documents/bauer_sync/projects/impc_mv_analysis/github_multivariate_phenotype/multivariate_phenotype"
 dir.create(".job", showWarnings = FALSE)
-partc <- c("debug", "debug11", "debug6", "debug8", "debug4")[5]
+partc <- c("debug", "debug11", "debug6", "debug8", "debug4")[2]
 file.copy(from = "scripts/01_model_fitting_wrapper.R",
           to = "scripts/01_model_fitting_wrapper_temp.R", overwrite = T)
 for (scen in scen_to_run) {#scen <- 1#
@@ -44,7 +44,7 @@ for (scen in scen_to_run) {#scen <- 1#
     file_name_curr <- gsub("XXX", subsamseed, analysis_table$file_core_name[scen])
     bashscript <- paste0(".job/", file_name_curr, ".sh")
     output.file <- file(bashscript, "wb")
-    partc <- ifelse(analysis_table$mem[scen] > 3000, "debug4", "debug11")
+    # partc <- ifelse(analysis_table$mem[scen] > 3000, "debug4", "debug11")
     cat(file = output.file, append = F, sep = "\n",
         c("#!/bin/bash\n",
           "#SBATCH --ntasks=1", 
@@ -53,6 +53,7 @@ for (scen in scen_to_run) {#scen <- 1#
           paste0("#SBATCH --partition ", partc),
           paste0("#SBATCH --job-name=", file_name_curr),
           paste0("#SBATCH --mem-per-cpu=", analysis_table$mem[scen], "MB"),
+          paste0("sudo mount -t drvfs //TW/Users/nicho/Documents/bauer_sync /mnt/x"),
           paste0("cd ", network_path_to_MVphen_git_repo),
           paste("srun Rscript --no-restore --no-save scripts/01_model_fitting_wrapper_temp.R",
                 run_type, scen, subsamseed, sep = " ")))
@@ -68,7 +69,7 @@ for (scen in scen_to_run) {#scen <- 1#
 }
 
 
-dos2unix < /mnt/c/Temp/test_line_endings.txt | cmp - /mnt/c/Temp/test_line_endings.txt
+# dos2unix < /mnt/c/Temp/test_line_endings.txt | cmp - /mnt/c/Temp/test_line_endings.txt
 
 
 
@@ -76,12 +77,19 @@ dos2unix < /mnt/c/Temp/test_line_endings.txt | cmp - /mnt/c/Temp/test_line_endin
 sinfo
 scancel -u root
 squeue
-
+scontrol update NodeName=HPZ420-4 State=IDLE
 sacct
+sudo mount -t drvfs //HPZ420-0/Users/nicho/Documents/slurm /mnt/s
+sudo mount -t drvfs //TW/bauer_sync /mnt/x
+
 # C:\Users\nicho\OneDrive\Documents\slurm_setup_files\shell_files
 # "#SBATCH --output=/mnt/x/projects/impc_mv_analysis/R_files/impc_mv_analysis/testing/test_%j.out",
 # "#SBATCH --error=/mnt/x/projects/impc_mv_analysis/R_files/impc_mv_analysis/testing/test_%j.err",
 
+BiocManager::install(c("GOfuncR"))
+BiocManager::install(c("GOfuncR"))
+
+BiocManager::install(c("org.Mn.eg.db"), )
 
 
 # cat(file = "C:/Temp/test_line_endings.txt", "hello\n hello")

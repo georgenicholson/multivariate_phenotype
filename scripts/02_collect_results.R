@@ -1,6 +1,6 @@
 rm(list = ls())
 
-run_type <- c("demo", "main", "benchmark", "test_benchmark")[4]
+run_type <- c("demo", "main", "benchmark", "test_benchmark")[3]
 
 ##########################################
 # Source function files
@@ -21,8 +21,6 @@ Data_all <- readRDS(control$Data_all_file)
 # Get table of analyses
 analysis_table <- create_table_of_analyses(control = control, check_status = T, run_type = run_type)
 
-
-
 resl.comp <- compl <- Sigll <- Ksigl <- pimatl <- Sighatl <- Rl <- omegaseql <- samll <- objl <- list()
 resl.comp$uv <- list(mn = Data_all$impc$Y_raw[Data_all$impc$sam_names, Data_all$impc$meas_names], 
                      sd = Data_all$impc$S_raw[Data_all$impc$sam_names, Data_all$impc$meas_names])
@@ -33,11 +31,16 @@ for(scen in 1:nrow(analysis_table)){
   }
   sam_names <- Data_all[[Data]]$sam_names
   N_all <- Data_all[[Data]]$N_all
-  train_test_list_file_curr <- file.path("output", "train_test_splits", paste0(Data, "_N_", N, "_P_", P, ".RDS"))
-  train_test_list <- readRDS(file = train_test_list_file_curr)
+  # train_test_list_file_curr <- file.path("output", "train_test_splits", paste0(Data, "_N_", N, "_P_", P, ".RDS"))
+  # train_test_list <- readRDS(file = train_test_list_file_curr)
+  train_test_list <- get_train_test_split(control = control, Data_all = Data_all, N = N, P = P, Data = Data, n_subsamples = n_subsamples)
+  
   meas_names <- train_test_list$phens_to_use
   P_all <- length(meas_names)
   
+  if (is.na(MVphen_K)) {
+    MVphen_K <- control$nfac
+  }
   facnam <- paste0("fac_", 1:MVphen_K)
   array1 <- array(NA, dim = c(N_all, P_all, n_subsamples), dimnames = list(sam_names, meas_names, 1:n_subsamples))
   array2 <- array(NA, dim = c(N_all, n_subsamples), dimnames = list(sam_names, 1:n_subsamples))
@@ -45,7 +48,7 @@ for(scen in 1:nrow(analysis_table)){
   crossval.llv <- rep(NA, n_subsamples)
   shared.formatl <- list(mnarr = array1, sdarr = array1, loocv.mnarr = array1, loocv.sdarr = array1, 
                          lfsrarr = array1, llmat = array2, llmat.raw = array2, llmat.zero = array2)
-  if(grepl("MVphen", Meth)){
+  if(grepl("MVphen", Meth)) {
     namc <- paste(Data, Meth, "nSig", nSig, "K", MVphen_K, sep = "_")
   } else {
     namc <- paste(Data, Meth, "nSig", nSig, sep = "_")

@@ -31,4 +31,6 @@ compl <- readRDS(file = control$file.compl)
 objl <- readRDS(file = control$file.objl)
 resll <- readRDS(file = control$file.resll)
 
-source("scripts/05a_power_comparisons.R")
+source("scripts/05a_heatmap_of_hits.R")
+source("scripts/05b_power_comparisons.R")
+source("scripts/05c_reference_lines.R")

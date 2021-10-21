@@ -108,6 +108,7 @@ get_control_parameters_mv <- function(control = list()) {
   defaults$file.objl <- paste0(defaults$global_res_dir, "/global_objl.RDS")
   defaults$file.resimp <- paste0(defaults$global_res_dir, "/resimp_comb.RDS")
   defaults$file_raw_factor_results <- paste0(defaults$global_res_dir, "/raw_factor_results.RDS")
+  defaults$file_raw_factor_results_parallel_output <- paste0(defaults$global_res_dir, "/raw_factor_results_parallel.RDS")
   defaults$Data_all_file <- file.path(defaults$data_dir, "Data_all.RDS") 
   # defaults$file.glob.res <- paste0(defaults$global_res_dir, "/global_eb_results.RData")
   # defaults$file.glob.loadings <- paste0(defaults$global_res_dir, "/global_eb_loadings.RData")
