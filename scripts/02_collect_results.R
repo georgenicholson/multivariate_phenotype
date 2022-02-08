@@ -1,4 +1,13 @@
 rm(list = ls())
+try({
+  path_to_dir <- "C:/Users/nicho/Documents/GitHub/multivariate_phenotype"
+  setwd(path_to_dir)
+  renv::activate(path_to_dir)
+  # renv::restore(path_to_dir)
+})
+getwd()
+
+run_type <- c("demo", "main", "benchmark", "test_benchmark")[3]
 
 ##########################################
 # Source function files
@@ -15,37 +24,38 @@ control <- get_control_parameters_mv()
 # Load data
 Data_all <- readRDS(control$Data_all_file)
 
-run_type <- c("demo", "main", "benchmark", "test_benchmark")[2]
 ##########################################
 # Get table of analyses
 analysis_table <- create_table_of_analyses(control = control, check_status = T, run_type = run_type)
-
-
 
 resl.comp <- compl <- Sigll <- Ksigl <- pimatl <- Sighatl <- Rl <- omegaseql <- samll <- objl <- list()
 resl.comp$uv <- list(mn = Data_all$impc$Y_raw[Data_all$impc$sam_names, Data_all$impc$meas_names], 
                      sd = Data_all$impc$S_raw[Data_all$impc$sam_names, Data_all$impc$meas_names])
 
 for(scen in 1:nrow(analysis_table)){
-  # print(analysis_table[scen, c("N", "P", "nSig", "me", "meth", "da")])
-  for(j in 1:ncol(analysis_table))
-    assign(colnames(analysis_table)[j], analysis_table[scen, j])
+  for (var_name in c("N", "P", "Data", "Meth", "nSig", "MVphen_K", "n_subsamples", "file_core_name")) {
+    assign(var_name, analysis_table[scen, var_name])
+  }
   sam_names <- Data_all[[Data]]$sam_names
-  meas_names <- Data_all[[Data]]$meas_names
   N_all <- Data_all[[Data]]$N_all
-  P_all <- Data_all[[Data]]$P_all
-  train_test_list <- readRDS(file = file.path("output", "train_test_splits", paste0(Data, "_N_", N, "_P_", P)))
-
+  # train_test_list_file_curr <- file.path("output", "train_test_splits", paste0(Data, "_N_", N, "_P_", P, ".RDS"))
+  # train_test_list <- readRDS(file = train_test_list_file_curr)
+  train_test_list <- get_train_test_split(control = control, Data_all = Data_all, N = N, P = P, Data = Data, n_subsamples = n_subsamples)
+  
+  meas_names <- train_test_list$phens_to_use
+  P_all <- length(meas_names)
+  
+  if (is.na(MVphen_K)) {
+    MVphen_K <- control$nfac
+  }
   facnam <- paste0("fac_", 1:MVphen_K)
   array1 <- array(NA, dim = c(N_all, P_all, n_subsamples), dimnames = list(sam_names, meas_names, 1:n_subsamples))
   array2 <- array(NA, dim = c(N_all, n_subsamples), dimnames = list(sam_names, 1:n_subsamples))
   array.fac <- array(NA, dim = c(N_all, MVphen_K, n_subsamples), dimnames = list(sam_names, facnam, 1:n_subsamples))
   crossval.llv <- rep(NA, n_subsamples)
   shared.formatl <- list(mnarr = array1, sdarr = array1, loocv.mnarr = array1, loocv.sdarr = array1, 
-                         # varimax = list(fac.mnarr = array.fac, fac.sdarr = array.fac), 
-                         # promax = list(fac.mnarr = array.fac, fac.sdarr = array.fac), 
                          lfsrarr = array1, llmat = array2, llmat.raw = array2, llmat.zero = array2)
-  if(grepl("MVphen", Meth)){
+  if(grepl("MVphen", Meth)) {
     namc <- paste(Data, Meth, "nSig", nSig, "K", MVphen_K, sep = "_")
   } else {
     namc <- paste(Data, Meth, "nSig", nSig, sep = "_")
@@ -55,7 +65,7 @@ for(scen in 1:nrow(analysis_table)){
   pimatl[[namc]] <- Ksigl[[namc]] <- Sigll[[namc]] <- Sighatl[[namc]] <- Rl[[namc]] <- omegaseql[[namc]] <- samll[[namc]] <- list()
   for(subsamseed in 1:n_subsamples){
     objl[[namc]][[subsamseed]] <- list()
-    file_core_name_w_seed <- gsub("XXX", subsamseed, file_core_name)
+    file_list <- get_file_list(control = control, file_core_name = analysis_table[scen, "file_core_name"], subsamseed = subsamseed)
     ###################################
     # Assign samples
     for (var_assign_subsample in c("sams_for_lik_cross_val", 
@@ -74,27 +84,22 @@ for(scen in 1:nrow(analysis_table)){
            sams.for.lik.cross.val = sams_for_lik_cross_val)
     res.store <- NULL
     if(grepl("MVphen", Meth)) {
-      emout.file.namc <- file.path(control$methods_comp_dir, paste0(file_core_name_w_seed, "_emout.RDS"))
-      res.store.namc <- file.path(control$methods_comp_dir, paste0(file_core_name_w_seed, "_res.RDS"))
-      resl.store.namc <- file.path(control$methods_comp_dir, paste0(file_core_name_w_seed, "_resl.RDS"))
-      fac.res.store.namc <- file.path(control$methods_comp_dir, paste0(file_core_name_w_seed, "_facres.RDS"))
-      loocv.res.store.namc <- file.path(control$methods_comp_dir, paste0(file_core_name_w_seed, "_loocv_res.RDS"))
       emloaded <- resloaded <- loocv.loaded <- fac.loaded <- FALSE
-      if (file.exists(emout.file.namc)) {
-        emout.mix <- readRDS(file = emout.file.namc)
+      if (file.exists(file_list$emout.file.namc)) {
+        emout.mix <- readRDS(file = file_list$emout.file.namc)
         emloaded <- TRUE
       }
-      if (file.exists(res.store.namc)) {
-        resl.store <- readRDS(file = res.store.namc)
+      if (file.exists(file_list$res.store.namc)) {
+        resl.store <- readRDS(file = file_list$res.store.namc)
         resloaded <- TRUE
         res.store <- resl.store$raw
       }
-      if (file.exists(loocv.res.store.namc)) {
-        loocv.store <- readRDS(file = loocv.res.store.namc)
+      if (file.exists(file_list$loocv.res.store.namc)) {
+        loocv.store <- readRDS(file = file_list$loocv.res.store.namc)
         loocv.loaded <- TRUE
       }
-      if (file.exists(fac.res.store.namc)) {
-        loocv.store <- readRDS(file = fac.res.store.namc)
+      if (file.exists(file_list$fac.res.store.namc)) {
+        loocv.store <- readRDS(file = file_list$fac.res.store.namc)
         fac.loaded <- TRUE
       }
       if (!emloaded | !resloaded) {
@@ -109,28 +114,24 @@ for(scen in 1:nrow(analysis_table)){
         }
       }
     }
-    if(Meth == "mash"){
-      mash.resl.file.namc <- paste0(meth.comp.output.dir, "/", file_core_name_w_seed, "_mash_resl.RData")
-      mashloaded <- NULL
-      mashloaded <- load(file = mash.resl.file.namc)
-      datatypec <- switch(Data, eqtl = "raw", impc = "zero")
-      if(datatypec  %in% names(resl.store)){
-        res.store <- resl.store[[datatypec]]
-      } else {
-        res.store <- resl.store[[1]]
-        warning("Need to re-run mash on this data set")
+    
+    if(Meth %in% c("mash", "XD")) {
+      res.store <- NULL
+      file_to_load <- switch(Meth,
+                             mash = file_list$mash.resl.file.namc,
+                             XD = file_list$XD.resl.file.namc)
+      mash_or_XD_loaded <- FALSE
+      if (file.exists(file_to_load)) {
+        resl.store <- readRDS(file = file_to_load)
+        datatypec <- switch(Data, eqtl = "raw", impc = "zero")
+        if (datatypec  %in% names(resl.store)) {
+          res.store <- resl.store[[datatypec]]
+          mash_or_XD_loaded <- TRUE
+        } 
       }
-      if(is.null(mashloaded))
-        warning(paste0(namc, " subsamseed ", subsamseed, " not loaded"))
-    }
-    if(Meth == "XD"){
-      bovy.resl.file.namc <- paste0(meth.comp.output.dir, "/", file_core_name_w_seed, "_bovy_resl.RData")
-      xdloaded <- NULL
-      xdloaded <- load(file = bovy.resl.file.namc)
-      datatypec <- switch(Data, eqtl = "raw", impc = "zero")
-      res.store <- resl.store[[datatypec]]
-      if(is.null(xdloaded))
-        warning(paste0(namc, " subsamseed ", subsamseed, " not loaded"))
+      if (!mash_or_XD_loaded) {
+        warning(paste0(file_to_load, " not loaded"))
+      }
     }
     if (!is.null(res.store)) {
       Sigll[[namc]][[subsamseed]] <- objl[[namc]][[subsamseed]]$Sigl <- lapply(res.store$Sigl, function(M) M[match(meas_names, rownames(M)), match(meas_names, colnames(M))])

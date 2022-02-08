@@ -1,6 +1,4 @@
-Data <- "impc"
 resimp <- readRDS(file = control$file.resimp)
-
 ####################################################
 #Reference lines numbers for text
 resimp0.imp <- resimp[resimp$line.type == control$control$nam.negcon & resimp$imputed, ]

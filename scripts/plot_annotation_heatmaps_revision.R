@@ -16,7 +16,6 @@ ngeno <- length(geno.un)
 first.day <- d[match(geno.un, d$geno), "day"]
 names(first.day) <- geno.un
 n.line.plot <- 500
-
 # load(file = resimp.with.sig.thresholds.file)
 resimp$geno.first.day <- first.day[match(resimp$geno, names(first.day))]
 resimp$procnam <- phmap[match(resimp$ph, phmap$ph), "procnam"]

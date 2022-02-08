@@ -1,15 +1,8 @@
 
 
-XDmeth <- Meth
-file.base.mash <- paste0(control$methods_comp_dir, "/", paste(paste(control$variables_in_filename, sapply(control$variables_in_filename, get), sep = "_"), collapse = "_"))
-file.base.XD <- paste0(control$methods_comp_dir, "/", paste(paste(control$variables_in_filename, sapply(control$variables_in_filename, get), sep = "_"), collapse = "_"))
-mash.resl.file.namc <- paste0(file.base.mash, "_mash_resl.RDS")
-mash.raw.results.file.namc <- paste0(file.base.mash, "_mash_raw_results.RDS")
-XD.output.file.namc <- paste0(file.base.XD, "_XD_output.RDS")
-XD.resl.file.namc <- paste0(file.base.XD, "_XD_resl.RDS")
-library(mashr)
-normU <- T
-use.pt.mass <- T
+
+
+require(mashr)
 ############################################################
 # Get big effects covariance matrices for MASH
 if(Data == "impc"){
@@ -63,15 +56,14 @@ if(Meth == "XD"){
   }
   print("Running Extreme Deconvolution")
   replace.XD <- T
-  if(!file.exists(XD.output.file.namc) | replace.XD){
+  if(!file.exists(file_list$XD.output.file.namc) | replace.XD){
     XD.out <- mashr:::bovy_wrapper(data = mashdata.XD, Ulist_init = Ul.XD.init, tol = control$XD_conv_tol)
     Sigl.XD <- XD.out$Ulist <- lapply(XD.out$Ulist, function(M){ dimnames(M) <- list(phens_to_use, phens_to_use); M})
     pimat.XD <- t(XD.out$pi)
     XD_result <- list(XD.out = XD.out, mashdata.XD = mashdata.XD, Sigl.XD = Sigl.XD, pimat.XD = pimat.XD)
-    save(XD_result, file = XD.output.file.namc)
-    print(XD.output.file.namc)
+    saveRDS(XD_result, file = file_list$XD.output.file.namc)
   } else {
-    load(file = XD.output.file.namc)
+    XD_result <- readRDS(file = file_list$XD.output.file.namc)
   }
   Sigl.XD <- lapply(XD_result$Sigl.XD, function(M) M[phens_to_use, phens_to_use])
   omegaseq.XD <- 1
@@ -95,15 +87,14 @@ if(Meth == "XD"){
                                    pimat = pimat.XD, 
                                    omegaseq = omegaseq.XD)
   }
-  save(resl.store, file = XD.resl.file.namc)
+  saveRDS(resl.store, file = file_list$XD.resl.file.namc)
 }
 
 ##############################################
 # Run MASH
 if(Meth == "mash"){
-  priorc <- c("nullbiased", "uniform")[1]
   replace.XD <- F
-  if(!file.exists(XD.output.file.namc) | replace.XD){
+  if(!file.exists(file_list$XD.output.file.namc) | replace.XD){
     print("Running Extreme Deconvolution")
     mashdata.XD <- mashdata.big.effects.for.XD
     Ul.XD.init <- Sigl.init.bigeff.mash
@@ -111,14 +102,14 @@ if(Meth == "mash"){
     Sigl.XD <- XD.out$Ulist <- lapply(XD.out$Ulist, function(M){ dimnames(M) <- list(phens_to_use, phens_to_use); M})
     pimat.XD <- t(XD.out$pi)
     XD_result <- list(XD.out = XD.out, mashdata.XD = mashdata.XD, Sigl.XD = Sigl.XD, pimat.XD = pimat.XD)
-    save(XD_result, file = XD.output.file.namc)
-    save(XD.out, mashdata.XD, Sigl.XD, pimat.XD, file = XD.output.file.namc)
-    print(XD.output.file.namc)
+    saveRDS(XD_result, file = file_list$XD.output.file.namc)
   } else {
     print("Loading Extreme Deconvolution results")
-    load(file = XD.output.file.namc)
+    print(file_list$XD.output.file.namc)
+    print(Data)
+    XD_result <- readRDS(file = file_list$XD.output.file.namc)
   }
-  Ul.XD.use <- XD.out$Ulist
+  Ul.XD.use <- XD_result$XD.out$Ulist
   if(K2 > 1){
     sfa <- varimax(svd.Ztil$v[, 1:K2])
     sfa.F <- t(svd.Ztil$v[, 1:K2] %*% sfa$rotmat)
@@ -135,40 +126,31 @@ if(Meth == "mash"){
   cov.meth <- c("identity", "equal_effects", "simple_het")
   cov.meth <- c(cov.meth, "singletons")
   Ul.canon <- cov_canonical(mashdata.for.model.fitting, cov_methods = cov.meth)
-  mashmethv <- c("data", "canon")
   resl <- list()
-  for(mashmeth in mashmethv){
-    Ul.all <- list()
-    if("data" %in% mashmeth)
-      Ul.all <- c(Ul.all, Ul.data)
-    if("canon" %in% mashmeth)
-      Ul.all <- c(Ul.all, Ul.canon)
-    res.mash.fitted.model <- mash(data = mashdata.for.model.fitting, 
-                                  Ulist = Ul.all, 
-                                  outputlevel = 2, 
-                                  usepointmass = use.pt.mass,
-                                  prior = priorc, 
-                                  normalizeU = normU, 
-                                  add.mem.profile = F)
-    mashdata.all.testing <- mash_set_data(Bhat = Y_zeroed[sams_for_model_testing, phens_to_use], 
-                                          Shat = S_zeroed[sams_for_model_testing, phens_to_use], 
-                                          alpha = 0, 
-                                          V = R.init)
-    res.mash.all.testing <- mash(mashdata.all.testing, 
-                                 g = res.mash.fitted.model$fitted_g, 
-                                 fixg = T, 
-                                 outputlevel = 2, 
-                                 add.mem.profile = F)
-    dimnames(res.mash.all.testing$vloglik) <- list(sams_for_model_testing, "llik")
-    mashnam <- paste0("mash_", paste(mashmeth, collapse = "+"), "_prior_", priorc)
-    resl[[mashnam]] <- list(mn = res.mash.all.testing$result$PosteriorMean[sams_for_model_testing, phens_to_use],
-                            sd = res.mash.all.testing$result$PosteriorSD[sams_for_model_testing, phens_to_use],
-                            loglikv = res.mash.all.testing$vloglik,
-                            lfdr = res.mash.all.testing$result$lfdr[sams_for_model_testing, phens_to_use],
-                            lfsr = res.mash.all.testing$result$lfsr[sams_for_model_testing, phens_to_use],
-                            loglik = sum(res.mash.all.testing$vloglik[sams_for_lik_cross_val, ]))
-    names(resl[[mashnam]]$loglikv) <- sams_for_model_testing
-  }
+  mashmeth <- c("data", "canon")
+  Ul.all <- c(Ul.data, Ul.canon)
+  res.mash.fitted.model <- mash(data = mashdata.for.model.fitting, 
+                                Ulist = Ul.all, 
+                                outputlevel = 2, 
+                                add.mem.profile = F)
+  mashdata.all.testing <- mash_set_data(Bhat = Y_zeroed[sams_for_model_testing, phens_to_use], 
+                                        Shat = S_zeroed[sams_for_model_testing, phens_to_use], 
+                                        alpha = 0, 
+                                        V = R.init)
+  res.mash.all.testing <- mash(mashdata.all.testing, 
+                               g = res.mash.fitted.model$fitted_g, 
+                               fixg = T, 
+                               outputlevel = 2, 
+                               add.mem.profile = F)
+  dimnames(res.mash.all.testing$vloglik) <- list(sams_for_model_testing, "llik")
+  mashnam <- paste0("mash_", paste(mashmeth, collapse = "+"))
+  resl[[mashnam]] <- list(mn = res.mash.all.testing$result$PosteriorMean[sams_for_model_testing, phens_to_use],
+                          sd = res.mash.all.testing$result$PosteriorSD[sams_for_model_testing, phens_to_use],
+                          loglikv = res.mash.all.testing$vloglik,
+                          lfdr = res.mash.all.testing$result$lfdr[sams_for_model_testing, phens_to_use],
+                          lfsr = res.mash.all.testing$result$lfsr[sams_for_model_testing, phens_to_use],
+                          loglik = sum(res.mash.all.testing$vloglik[sams_for_lik_cross_val, ]))
+  names(resl[[mashnam]]$loglikv) <- sams_for_model_testing
   phnam.mash <- colnames(res.mash.fitted.model$result$PosteriorMean)
   mash.omegaseq <- res.mash.fitted.model$fitted_g$grid^2
   mash.n.om <- length(mash.omegaseq)
@@ -203,7 +185,7 @@ if(Meth == "mash"){
                                    pimat = t(mash.pimat.t.use), 
                                    omegaseq = mash.omegaseq)
   }
-  save(resl.store, file = mash.resl.file.namc)
+  saveRDS(resl.store, file = file_list$mash.resl.file.namc)
   mash_results <- list(res.mash.all.testing = res.mash.all.testing, res.mash.fitted.model = res.mash.fitted.model)
-  save(mash_results, file = mash.raw.results.file.namc)
+  saveRDS(mash_results, file = file_list$mash.raw.results.file.namc)
 }
