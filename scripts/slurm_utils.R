@@ -33,13 +33,14 @@ for(dirc in c(control$output_dir, control$methods_comp_dir, control$global_res_d
 analysis_table <- create_table_of_analyses(control = control, check_status = T, run_type = run_type)
 # analysis_table <- analysis_table[order(analysis_table$Data, decreasing = TRUE), ]
 scen_to_run <- 1:nrow(analysis_table)
-network_path_to_MVphen_git_repo <- "/mnt/x/projects/impc_mv_analysis/github_multivariate_phenotype/multivariate_phenotype"
+# network_path_to_MVphen_git_repo <- "/mnt/x/projects/impc_mv_analysis/github_multivariate_phenotype/multivariate_phenotype"
+network_path_to_MVphen_git_repo <- "/mnt/c/Users/nicho/Documents/GitHub/multivariate_phenotype"
 # network_path_to_MVphen_git_repo <- "//TW/Users/nicho/Documents/bauer_sync/projects/impc_mv_analysis/github_multivariate_phenotype/multivariate_phenotype"
 dir.create(".job", showWarnings = FALSE)
-partc <- c("debug", "debug11", "debug6", "debug8", "debug4")[2]
+partc <- c("debug", "debug11", "debug6", "debug8", "debug4")[5]
 file.copy(from = "scripts/01_model_fitting_wrapper.R",
           to = "scripts/01_model_fitting_wrapper_temp.R", overwrite = T)
-for (scen in scen_to_run) {#scen <- 1#
+scen=12#for (scen in scen_to_run) {#scen <- 1#
   for (subsamseed in 1:analysis_table$n_subsamples[scen]) {#subsamseed <- 1#
     file_name_curr <- gsub("XXX", subsamseed, analysis_table$file_core_name[scen])
     bashscript <- paste0(".job/", file_name_curr, ".sh")
@@ -86,12 +87,14 @@ sudo mount -t drvfs //TW/bauer_sync /mnt/x
 # "#SBATCH --output=/mnt/x/projects/impc_mv_analysis/R_files/impc_mv_analysis/testing/test_%j.out",
 # "#SBATCH --error=/mnt/x/projects/impc_mv_analysis/R_files/impc_mv_analysis/testing/test_%j.err",
 
+BiocManager::install(c("Mus.musculus"))
 BiocManager::install(c("GOfuncR"))
-BiocManager::install(c("GOfuncR"))
 
-BiocManager::install(c("org.Mn.eg.db"), )
+BiocManager::install(c("org.Mm.eg.db"))
+BiocManager::install(c("topGO"))
+install.packages("XML")
 
-
+renv::snapshot()
 # cat(file = "C:/Temp/test_line_endings.txt", "hello\n hello")
 # dos2unix < /mnt/c/Temp/test_line_endings.txt | cmp - /mnt/c/Temp/test_line_endings.txt
 # dos2unix -n 

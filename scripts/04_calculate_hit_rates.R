@@ -1,9 +1,9 @@
 rm(list = ls())
 try({
-  path_to_dir <- "C:/Users/nicho/Documents/bauer_sync/projects/impc_mv_analysis/github_multivariate_phenotype/multivariate_phenotype"
+  path_to_dir <- "C:/Users/nicho/Documents/GitHub/multivariate_phenotype"
   setwd(path_to_dir)
-  renv::activate(path_to_dir)
-  renv::restore(path_to_dir)
+  # renv::activate(path_to_dir)
+  # renv::restore(path_to_dir)
 })
 getwd()
 
@@ -37,6 +37,8 @@ resl.err.rates.comb <- c(resl.comp[grepl(Data, names(resl.comp)) | names(resl.co
 split.use <- 1
 resl.err.rates.one.split <- c(list(uv = resl.comp$uv), lapply(compl[grepl(Data, names(compl))], 
                                    function(x) list(mn = x$mnarr[, , split.use], sd = x$sdarr[, , split.use], lfsr = x$lfsrarr[, , split.use])))
+
+
 
 # str(resl.err.rates.comb[[1]])
 # mean(resl.err.rates.comb$varimax$mn == 0)

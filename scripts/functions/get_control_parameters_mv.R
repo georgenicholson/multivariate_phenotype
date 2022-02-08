@@ -112,7 +112,7 @@ get_control_parameters_mv <- function(control = list()) {
   defaults$Data_all_file <- file.path(defaults$data_dir, "Data_all.RDS") 
   # defaults$file.glob.res <- paste0(defaults$global_res_dir, "/global_eb_results.RData")
   # defaults$file.glob.loadings <- paste0(defaults$global_res_dir, "/global_eb_loadings.RData")
-  # defaults$file.go.results <- paste0(defaults$global_res_dir, "/global_go_results.RData")
+  defaults$file.go.results <- paste0(defaults$global_res_dir, "/global_go_results.RData")
   # defaults$file.ebi.impc.results <- paste0(processed.data.dir, "/preprocessed_ebi_impc_results_v11.RData")
   # meth.comp.output.dir <- paste0(output_dir, "/meth_comp")
   

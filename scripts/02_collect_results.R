@@ -1,4 +1,11 @@
 rm(list = ls())
+try({
+  path_to_dir <- "C:/Users/nicho/Documents/GitHub/multivariate_phenotype"
+  setwd(path_to_dir)
+  renv::activate(path_to_dir)
+  # renv::restore(path_to_dir)
+})
+getwd()
 
 run_type <- c("demo", "main", "benchmark", "test_benchmark")[3]
 

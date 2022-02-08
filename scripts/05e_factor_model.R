@@ -1,80 +1,34 @@
-# rm(list = ls())
-# Data <- "impc"
-# full.analysis <- T
-# source("X:/projects/impc_mv_analysis/R_files/impc_mv_parameters.R")
-# load(file = file.resl.comp)
-# load(file = paste0(global.res.dir, "/resimp_comb.RData"))
-# load(file = uv.results.Y.S)
-# reflines.plot.dir <- "X:/projects/impc_mv_analysis/plots/impc_mv_paper_plots/ref_lines_temp"
-# dir.create(reflines.plot.dir, showWarnings = F)
-
 resl.comp.fac <- readRDS(file = control$file_raw_factor_results)
 resimp <- readRDS(file = control$file.resimp)
-
-
-# file.glob.res <- paste0(global.res.dir, "/global_eb_results.RData")
-# load(file = file.glob.res)
 resl <- resl.comp
 resl$eb <- resl[[control$mv_meth_nam_use]]
-# str(resl.comp, m = 1)
-
-# load(file = file.resl.comp.fac)
-# load(file = procord.file)
-# factor.plot.dir <- "X:/projects/impc_mv_analysis/plots/impc_mv_paper_plots/factor_plots_temp"
-# dir.create(factor.plot.dir, showWarnings = F)
-
-
-# load(file = file.glob.res)
-# nfac <- 24
-# vc.type <- c("vari", "pro")[1]
-# load(file = paste0(meth.comp.output.dir, "/ebmix_results_nf_", nfac, "_vt_", vc.type, ".RData"))
-# load(file = paste0(meth.comp.output.dir, "/ebmix_results.RData"))
-# load(file = em.curated.results.file)
-# load(file = resimp.with.sig.thresholds.file)
-
-# load(file = file.glob.loadings) #facs
 sig <- resl$eb$Sig.comb
 fac.meth <- c("varimax", "promax")[1]
-# facs <- switch(fac.meth, varimax = facs.varimax, promax = facs.promax)
-
 facs <- resl$eb$facs.varimax
-
-# load(file = fac.res.store.namc)
-# facs <- fac.res.store[[fac.meth]]$loadings
-# facs <- resl.out$ebf$loadings.ord
 fl <- list()
-# resl.comp.fac
 fl$t <- resl.comp.fac[[control$mv_meth_nam_use]]$mn / resl.comp.fac[[control$mv_meth_nam_use]]$sd
-# fl$t <- resl.out[[fac.meth]]$mn / resl.out[[fac.meth]]$sd
 fl$th <- fl$t
-
-unique(resimp$ph)
-str(resimp)
-
 fl$th[] <- resimp[, paste0(fac.meth, ".th.final")][1]
 if(length(unique(resimp[, paste0(fac.meth, ".th.final")])) > 1)
   stop("Multiple factor sig thresh, but code written for single thresh")
-# facdat <- resl$f$facdat
 
 sigcor <- t(t(sig / sqrt(diag(sig))) / sqrt(diag(sig)))
 eval <- eigen(sigcor)$values
 graphics.off()
 cumexpl <- cumsum(eval) / sum(eval)
-corr.explained <- (cumsum(eval) / sum(eval))[nfac]
+corr.explained <- (cumsum(eval) / sum(eval))[control$nfac]
 tabc <- data.frame(n = 1:ncol(sig), cump = cumexpl)
-nfac <- ncol(facs)
-propexp <- tabc[match(nfac, tabc$n), "cump"]
+nfac <- control$nfac
+facnam <- paste0("fac_", 1:control$nfac)
 
-# Cormn <- t(t(Sig.mn) / sqrt(diag(Sig.mn))) / sqrt(diag(Sig.mn))
-# eigc <- eigen(Cormn)
-# corr.explained <- (cumsum(eigc$values) / sum(eigc$values))[nfac]
+propexp <- tabc[match(nfac, tabc$n), "cump"]
 
 ####################################################
 #plot cumulative correlation explained
 #######################################
 graphics.off()
 fnamc <- "cumulative_correlation_explained.jpg"
-jpeg(paste(factor.plot.dir, "/", fnamc, sep = ""), 6, 6, units = "in", res = 1000)
+jpeg(paste(control$figure_dir, "/", fnamc, sep = ""), 6, 6, units = "in", res = 1000)
 par(mar = c(5, 5, 2, 2))
 plot(c(0, 1:ncol(sig)), c(0, cumexpl), ty = "l", xlab = "Number of eigenvectors", 
      ylab = "", ylim = c(0, 1), xaxs = "i", yaxs = "i", las = 1)
@@ -82,20 +36,17 @@ lines(x = c(nfac, nfac, 0), y = c(0, propexp, propexp), lty = 3)
 # axis(side = 2, at = propexp, labels = formatC(propexp, format = "f", digits = 3), las = 2, col = 1)
 mtext(side = 2, text = "Cumulative proportion of correlation explained", line = 4)
 dev.off()
-file.copy(from = paste(factor.plot.dir, "/", fnamc, sep = ""),
-          to = paste(revision.paper.figures, "/", fnamc, sep = ""), overwrite = TRUE)
-
-
+file.copy(from = paste(control$figure_dir, "/", fnamc, sep = ""),
+          to = paste(control$dropbox_figure_dir, "/", fnamc, sep = ""), overwrite = TRUE)
 
 save.num <- c("nfac")
 for(numc in save.num)
-  write.table(nfac, file = paste(revision.text.numbers, "/", numc, ".txt", sep = ""), 
+  write.table(nfac, file = paste(control$dropbox_text_numbers_dir, "/", numc, ".txt", sep = ""), 
               col.names = F, row.names = F, quote = F)
 save.prop <- c("corr.explained")
 for(numc in save.prop)
-  write.table(formatC(100 * eval(as.name(numc)), digits = 0, format = "f"), file = paste(revision.text.numbers, "/", numc, ".txt", sep = ""), 
+  write.table(formatC(100 * eval(as.name(numc)), digits = 0, format = "f"), file = paste(control$dropbox_text_numbers_dir, "/", numc, ".txt", sep = ""), 
               col.names = F, row.names = F, quote = F)
-
 
 ##############################################################################
 #Calculate odds ratio pairwise between factors for use in text and figure
@@ -110,8 +61,6 @@ facord <- colnames(sigmat)
 propup <- colMeans(sigmat == 1)
 propdo <- colMeans(sigmat == -1)
 propall <- colMeans(sigmat != 0)
-
-
 
 all.dir <- opp.dir <- same.dir <- ormat <- orpmat <- matrix(NA, nfac, nfac)
 for(i in 1:(nfac - 1)){
@@ -140,30 +89,22 @@ fac.sig.th <- .05
 n.fac.pr.sig <- sum(orqmat < fac.sig.th, na.rm = T) / 2
 
 #order phenotypes within procedure for factor plot
-phord.fac <- phord
-for(procc in procord){
-  phunc <- as.matrix(pout[pout$procnam == procc, "ph"])
-  phunc <- phunc[phunc %in% phord]
+phord.fac <- Data_all$impc$phord
+for(procc in Data_all$impc$procord){
+  phunc <- as.matrix(Data_all$impc$phmap[Data_all$impc$phmap$procnam == procc, "ph"])
+  phunc <- phunc[phunc %in% Data_all$impc$phord]
   if(length(phunc) > 2){
     phunc.ord <- phunc[hclust(dist(abs(facs[phunc, ]), meth = "manhattan"))$order]
-    phord.fac[phord %in% phunc] <- phunc.ord
+    Data_all$impc$phord[Data_all$impc$phord %in% phunc] <- phunc.ord
   }
 }
-# ormat.clust <- -log(ormat)
-# diag(ormat.clust) <- 0
-# facord.clust <- paste("f.", 1:nfac, sep = "")[hclust(as.dist(-ormat.clust))$order]
 lean.ph <- phmap[phmap$nam == "Lean mass", "ph"]
-table(resl.out$eb$signsig[, lean.ph])
-table(resl.out$eb.fac$signsig[, "f.1"])
-table(sigmat.in[, "f.1"])
-table(sign(fl$t[, "f.1"]))
-str(phmap)
-
-# 
-# write.csv(tab.fac.interp, file = "X:/projects/impc_mv_analysis/data_out/factor_interpretation_table.csv", row.names = F)
-# loadmat <- zpl
-# save(loadmat, file = "X:/projects/impc_mv_analysis/data_out/loadmat.RData", row.names = F)
-
+# table(resl.out$eb$signsig[, lean.ph])
+# table(resl.out$eb.fac$signsig[, "f.1"])
+# table(sigmat.in[, "f.1"])
+# table(sign(fl$t[, "f.1"]))
+# str(phmap)
+# Data_all$impc$phmap
 
 ###################################################################
 #Export numbers for text, particularly the number of pairwise tests and the number significant
@@ -174,20 +115,20 @@ mean.prop.up <- mean(propup / propall)
 save.num <- c("max.prop.annot", "min.prop.annot", "mean.prop.up")
 for(numc in save.num)
   write.table(formatC(eval(as.name(numc)) * 100, format = "f", digits = 1), 
-              file = paste(revision.text.numbers, "/", numc, ".txt", sep = ""), 
+              file = paste(control$dropbox_text_numbers_dir, "/", numc, ".txt", sep = ""), 
               col.names = F, row.names = F, quote = F)
 save.num <- c("n.fac.pr.test", "n.fac.pr.sig")
 for(numc in save.num)
   write.table(formatC(eval(as.name(numc)), format = "f", digits = 0), 
-              file = paste(revision.text.numbers, "/", numc, ".txt", sep = ""), 
+              file = paste(control$dropbox_text_numbers_dir, "/", numc, ".txt", sep = ""), 
               col.names = F, row.names = F, quote = F)
 
 
 
 
-plot(facs[, "f.1"])
-facs[lean.ph, "f.1"]
-table(sigmat.in[, "f.1"] )
+# plot(facs[, "f.1"])
+# facs[lean.ph, "f.1"]
+# table(sigmat.in[, "f.1"] )
 
 fac.maxload <- apply(facs[phord.fac, facord], 2, function(v) max(abs(v)))
 corfac <- cor(sigmat)
@@ -196,7 +137,7 @@ zpl <- t(facs[phord.fac, facord]) * fac.load.sign.adjust[facord] / fac.maxload[f
 phmat <- apply(zpl, 1, function(v) colnames(zpl)[order(-abs(v))[1:nloadlook]])
 toploadmat <- apply(zpl, 1, function(v) v[order(-abs(v))[1:nloadlook]])
 nammat <- phmat
-nammat[] <- pout[match(phmat, pout$ph), "nam"]
+nammat[] <- Data_all$impc$phmap[match(phmat, Data_all$impc$phmap$ph), "nam"]
 nph <- length(phord.fac)
 tab.fac.interp <- data.frame(phen.name = c(nammat), loading = round(c(toploadmat), 2),
                              factor.num = rep(1:nfac, each = nloadlook))
@@ -206,21 +147,31 @@ facannot <- 1:nfac
 #               "Sensorimotor gating (-)", "Liver function (-)", "Blood cholestrol (-)", "Heart rate (+)", 
 #               "Balance/coordination (-)", "Hemoglobin (-)", "Deafness (+)", "Activity/exploration 2 (+)", 
 #               "Neutrophil & monocyte differential (+)", "White blood cell count (-)", "Kidney function (-)", "Sleep time (+)")  
-facannot <- c(ord1 = "Body size (-)", ord2 = "Liver function (-)", ord3 = "???Lymphocyte differential (-)", ord4 = "Blood cholestrol (-)", 
-              ord5 = "???Balance/coordination/Sleep (-)", ord6 = "??? Cardiopulmonary function (-)",
-              ord7 = "Activity/exploration 1 (+)", ord8 = "Bone mineral density (-)", ord9 = "Sensorimotor gating (-)",
+# facannot <- c(ord1 = "Body size (-)", ord2 = "Liver function (-)", ord3 = "???Lymphocyte differential (-)", ord4 = "Blood cholestrol (-)", 
+#               ord5 = "???Balance/coordination/Sleep (-)", ord6 = "??? Cardiopulmonary function (-)",
+#               ord7 = "Activity/exploration 1 (+)", ord8 = "Bone mineral density (-)", ord9 = "Sensorimotor gating (-)",
+#               ord10 = "Deafness (+)", ord11 = "Grip strength (-)", ord12 = "Heart rate (+)", 
+#               ord13 = "Activity/exploration 2 (+)", ord14 = "Red blood cell count (-)", ord15 = "Respiratory exchange ratio (-)",
+#               ord16 = "Hemoglobin (-)", ord17 = "White blood cell count (+)", ord18 = "Eosinophil differential (-)",
+#               ord19 = "??? Anaemia (+)", ord20 = "??? Sleep bout SD (-)")
+facannot <- c(ord1 = "Body size (-)", ord2 = "Fat mass (-)", ord3 = "Activity/exploration 1 (+)", ord4 = "Deafness 1 (+)", 
+              ord5 = "Grip strength (-)", ord6 = "Deafness 2 (+)",
+              ord7 = "Cholesterol (+)", ord8 = "Bone mineral density (-)", ord9 = "Sensorimotor gating (-)",
               ord10 = "Deafness (+)", ord11 = "Grip strength (-)", ord12 = "Heart rate (+)", 
               ord13 = "Activity/exploration 2 (+)", ord14 = "Red blood cell count (-)", ord15 = "Respiratory exchange ratio (-)",
               ord16 = "Hemoglobin (-)", ord17 = "White blood cell count (+)", ord18 = "Eosinophil differential (-)",
               ord19 = "??? Anaemia (+)", ord20 = "??? Sleep bout SD (-)")
 
 
-
+facmap <- data.frame(original = facnam, reordered = facord)
+tab.fac.interp$factor_num_original <- rep(facord, each = nloadlook)#facmap[match(paste0("fac_", tab.fac.interp$factor.num), facmap$reordered), "original"]
 # "Fat mass/insulin (-)", "Bone mineral density (-)",
 # "Cardiac function (-)", ,                 
 # "Balance/coordination (-)",  
 # "Neutrophil & monocyte differential (+)", "Kidney function (-)", "Sleep time (+)")
 tab.fac.interp$factor.annotation <- rep(facannot, each = nloadlook)
+write.csv(tab.fac.interp, file = "C:/Temp/factor_interp.csv")
+
 tab.fac.interp[]
 # save(facord, fac.load.sign.adjust, file = paste(fig.obj.dir, "/facord.RData", sep = ""))
 
@@ -237,7 +188,7 @@ devwid <- 9
 devhei <- 11
 if(jpegc){
   fnamc <- "factor_interpretation_plot.jpg"
-  jpeg(paste(factor.plot.dir, "/", fnamc, sep = ""), devwid, 11, units = "in", res = 1000)
+  jpeg(paste(control$figure_dir, "/", fnamc, sep = ""), devwid, 11, units = "in", res = 1000)
 } else {
   graphics.off()
   windows(devwid, 11, xpos = 1250, ypos = 300)
@@ -271,31 +222,31 @@ cexax.mtext.big <- .8
 ###############################
 #Panel (a)
 #######################
-image(x = 1:nfac, y = 1:nph, z = zpl, col = rain, yaxt = "n", ylab = "", cex.axis = cexax, xaxt = "n")
+image(x = 1:nfac, y = 1:nph, z = zpl, col = control$heat_col_palette, yaxt = "n", ylab = "", cex.axis = cexax, xaxt = "n")
 ypl1 <- grconvertY(c(0, 1), from = "nfc", "ndc")
 mtext(side = 3, at = -2, line = .5, text = "(a)", cex = cexlet)
 abline(v = 1:nfac - .5)
-procv <- pout[match(phord.fac, pout$ph), "procnam"]
-procats <- sapply(procord, function(procc) mean(which(procv == procc)))
-axis(side = 2, labels = procord, at = procats, las = 2, cex.axis = cexax.lablt)
-phnam <- pout[match(phord.fac, pout$ph), "nam"]
+procv <- Data_all$impc$phmap[match(phord.fac, Data_all$impc$phmap$ph), "procnam"]
+procats <- sapply(Data_all$impc$procord, function(procc) mean(which(procv == procc)))
+axis(side = 2, labels = Data_all$impc$procord, at = procats, las = 2, cex.axis = cexax.lablt)
+phnam <- Data_all$impc$phmap[match(phord.fac, Data_all$impc$phmap$ph), "nam"]
 odds <- seq(1, nph, by = 2)
 evens <- seq(2, nph, by = 2)
 ats <- 1:length(phord.fac)
 phnamsh <- phnam
-datswap <- data.frame(old = c("Forelimb and hindlimb grip strength measurement mean", 
-                              "Forelimb grip strength normalised against body weight",
-                              "Forelimb and hindlimb grip strength normalised against body weight"),
-                      new = c("Forelimb and hindlimb strength grip mean", 
-                              "Forelimb grip strength (/weight)",
-                              "Forelimb and hindlimb grip strength (/weight)"))
-phnamsh[match(datswap$old, phnamsh)] <- datswap$new
+# datswap <- data.frame(old = c("Forelimb and hindlimb grip strength measurement mean", 
+#                               "Forelimb grip strength normalised against body weight",
+#                               "Forelimb and hindlimb grip strength normalised against body weight"),
+#                       new = c("Forelimb and hindlimb strength grip mean", 
+#                               "Forelimb grip strength (/weight)",
+#                               "Forelimb and hindlimb grip strength (/weight)"))
+# phnamsh[match(datswap$old, phnamsh)] <- datswap$new
 lineout <- 17
 axis(side = 4, labels = NA, at = ats[odds], las = 2, cex.axis = cexax2)
 axis(side = 4, labels = NA, at = ats[evens], las = 2, cex.axis = cexax2, tcl = -(lineout - .5), col.ticks = "grey")
 mtext(side = 4, line = 1, text = phnamsh[odds], at = ats[odds], las = 2, cex = cexax.labrt, adj = 0)
 mtext(side = 4, line = lineout, text = phnamsh[evens], at = ats[evens], las = 2, cex = cexax.labrt, adj = 0)
-abline(h = match(procord, procv) - .5, lwd = 2)
+abline(h = match(Data_all$impc$procord, procv) - .5, lwd = 2)
 # ?mtext
 
 ###############################
@@ -305,13 +256,13 @@ orth <- 10
 ormatpl <- ormat
 ormatpl[ormatpl > orth] <- orth
 image(x = 1:nfac, y = 1:nfac, log(ormatpl), zlim = c(-1, 1) * log(orth),
-      xaxt = "n", yaxt = "n", col = rain, xlab = "", ylab = "")
+      xaxt = "n", yaxt = "n", col = control$heat_col_palette, xlab = "", ylab = "")
 ypl2 <- grconvertY(c(0, 1), from = "nfc", "ndc")
 mtext(side = 1, at = -3, line = 1, text = "(b)", cex = cexlet)
 
 for(j in 1:nrow(zpl)){
   phvc <- colnames(zpl)[order(-abs(zpl[j, ]))[1:10]]
-  phnamvc <- pout[match(phvc, pout$ph), "nam"]
+  phnamvc <- Data_all$impc$phmap[match(phvc, Data_all$impc$phmap$ph), "nam"]
   datc <- data.frame(nam = phnamvc, val = zpl[j, phvc])
 }
 axis(side = 2, labels = facannot, at = 1:nfac, las = 2, cex.axis = cexax3)
@@ -343,7 +294,7 @@ par(fig = c(barx1, barx1 + barwid, bary1 - barhei, bary1 + barhei), new = T)
 cexax <- 1.1
 linec <- 4
 par(mar = c(0, 0, 0, 0))
-image(z = t(as.matrix(1:1000)), y = seq(-1, 1, len = 1000), x = 1, col = rain, xaxt = "n", yaxt = "n",
+image(z = t(as.matrix(1:1000)), y = seq(-1, 1, len = 1000), x = 1, col = control$heat_col_palette, xaxt = "n", yaxt = "n",
       ylab = "")
 axis(side = 2, las = 2, cex.axis = cexax4, labels = c("-1.0", -0.5, 0.0, 0.5, "1.0"), at = seq(-1, 1, by = .5), las = 1)
 mtext(side = 2, line = linec, text = 'Loadings', cex = cexax.mtext.big, las = 0)
@@ -355,7 +306,7 @@ mtext(side = 2, line = linec * lin.mult, text = "in panel (a)", cex = cexax.mtex
 par(fig = c(barx2, barx2 + barwid, bary2 - barhei, bary2 + barhei), new = T)
 par(mar = c(0, 0, 0, 0))
 range(log(ormatpl))
-image(z = t(as.matrix(1:1000)), y = seq(-1 * log(orth), 1 * log(orth), len = 1000), x = 1, col = rain, xaxt = "n", yaxt = "n",
+image(z = t(as.matrix(1:1000)), y = seq(-1 * log(orth), 1 * log(orth), len = 1000), x = 1, col = control$heat_col_palette, xaxt = "n", yaxt = "n",
       ylab = "")
 if(orth == 10){
   orat <- c(.1, .2, .5, 1, 2, 5, 10)
@@ -376,12 +327,12 @@ mtext(side = 2, line = linec * lin.mult, text = "in panel (b)", cex = cexax.mtex
 # 
 if(jpegc){
   dev.off()
-    file.copy(from = paste(factor.plot.dir, "/", fnamc, sep = ""),
-              to = paste(revision.paper.figures, "/", fnamc, sep = ""), overwrite = TRUE)
+    file.copy(from = paste(control$figure_dir, "/", fnamc, sep = ""),
+              to = paste(control$dropbox_figure_dir, "/", fnamc, sep = ""), overwrite = TRUE)
 }
 # 
 # image(x = 1:nfac, y = 1:nfac, log(ormatpl), zlim = c(-1, 1) * log(orth),
-#       xaxt = "n", yaxt = "n", col = rain, xlab = "", ylab = "")
+#       xaxt = "n", yaxt = "n", col = control$heat_col_palette, xlab = "", ylab = "")
 # keybd.press('ctrl+alt+u')
 
 
@@ -454,7 +405,7 @@ if(jpegc){
 # 
 # graphics.off()
 # fnamc <- "factor_interpretation_plot.jpg"
-# jpeg(paste(factor.plot.dir, "/", fnamc, sep = ""), 13, 7, units = "in", res = 1000)
+# jpeg(paste(control$figure_dir, "/", fnamc, sep = ""), 13, 7, units = "in", res = 1000)
 # wc <- .7
 # hc1 <- .15
 # hc2 <- .75
@@ -483,7 +434,7 @@ if(jpegc){
 # axis(side = 2, labels = facannot, at = 1:nfac, las = 2, cex.axis = 1)
 # # axis(side = 1, labels = facannot, at = 1:nfac, las = 2, cex.axis = 1)
 # dev.off()
-# file.copy(from = paste(factor.plot.dir, "/", fnamc, sep = ""),
+# file.copy(from = paste(control$figure_dir, "/", fnamc, sep = ""),
 #           to = paste(paper.figures.dropbox, "/", fnamc, sep = ""), overwrite = TRUE)
 # 
 # 
@@ -593,7 +544,7 @@ if(jpegc){
 # }
 # graphics.off()
 # fnamc <- "factor_interpretation_plot.jpg"
-# # jpeg(paste(factor.plot.dir, "/", fnamc, sep = ""), 7, 11, units = "in", res = 1000)
+# # jpeg(paste(control$figure_dir, "/", fnamc, sep = ""), 7, 11, units = "in", res = 1000)
 # wc <- .6
 # hc <- .8
 # layout(matrix(c(1, 2, 4, 3), 2, 2), hei = c(hc, 1 - hc), wid = c(wc, 1 - wc))
@@ -652,7 +603,7 @@ if(jpegc){
 # axis(side = 3, las = 2, cex.axis = cexax2, labels = c("-1.0", -0.5, 0.0, 0.5, "1.0"), at = seq(-1, 1, by = .5), las = 0)
 # mtext(side = 3, text = expression(italic(tilde(z))), line = 2, cex = cexax, las = 0)
 # dev.off()
-# file.copy(from = paste(factor.plot.dir, "/", fnamc, sep = ""),
+# file.copy(from = paste(control$figure_dir, "/", fnamc, sep = ""),
 #           to = paste(paper.figures.dropbox, "/", fnamc, sep = ""), overwrite = TRUE)
 # 
 # 

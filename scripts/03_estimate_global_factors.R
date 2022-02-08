@@ -88,6 +88,9 @@ fac.wt.mnarr <- apply(sweep(fac.mnarr, c(1, 3), pmix, '*'), 1:2, function(v) sum
 fac.wt.varr <- apply(sweep(fac.sdarr^2, c(1, 3), pmix, '*'), 1:2, function(v) sum(v, na.rm = T))
 fac.wt.mnsqarr <- apply(sweep(fac.mnarr^2, c(1, 3), pmix, '*'), 1:2, function(v) sum(v, na.rm = T))
 fac.wt.lfsrarr <- apply(sweep(fac.lfsrarr, c(1, 3), pmix, '*'), 1:2, function(v) sum(v, na.rm = T))
-resl.comp.fac[[control$mv_meth_nam_use]] <- list(mn = fac.wt.mnarr, sd = sqrt(fac.wt.varr + fac.wt.mnsqarr - fac.wt.mnarr^2), lfsr = fac.wt.lfsrarr)
+resl.comp.fac[[control$mv_meth_nam_use]] <- list(mn = fac.wt.mnarr, 
+                                                 sd = sqrt(fac.wt.varr + fac.wt.mnsqarr - fac.wt.mnarr^2), 
+                                                 lfsr = fac.wt.lfsrarr)
 saveRDS(resl.comp.fac, file = control$file_raw_factor_results)
 
+str(fac.res.store, m = 1)
