@@ -37,3 +37,4 @@ restabl <- readRDS(file = file.path(control$global_res_dir, paste0("restabl_comb
 # source("scripts/05a_heatmap_of_hits.R")
 # source("scripts/05b_power_comparisons.R")
 # source("scripts/05c_reference_lines.R")
+source("scripts/05d_gene_ontology.R")

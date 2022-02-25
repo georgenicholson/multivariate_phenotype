@@ -96,6 +96,7 @@ get_control_parameters_mv <- function(control = list()) {
   # defaults$text_numbers_dir <- "text_numbers"
   defaults$dropbox_figure_dir <- "C:/Users/nicho/Dropbox/Apps/Overleaf/Illuminating the mammalian genome with multivariate phenotype analysis/revision_figures"
   defaults$dropbox_text_numbers_dir <- "C:/Users/nicho/Dropbox/Apps/Overleaf/Illuminating the mammalian genome with multivariate phenotype analysis/revision_text_numbers"
+  defaults$dropbox_table_dir <- "C:/Users/nicho/Dropbox/Apps/Overleaf/Illuminating the mammalian genome with multivariate phenotype analysis/revision_tables"
   
   
   #####################################################################
