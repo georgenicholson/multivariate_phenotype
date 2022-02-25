@@ -1,6 +1,18 @@
 # .libPaths("X:/R_libraries")
-
 # source("scripts/05_generate_results.R")
+####################################
+# Control parameters
+
+sd_mult_big_eff_thresh <- 2
+dirc <- "bo"
+nperm <- 1000
+fwer.th <- .05
+methc <- c("ph", "proc", "fac")[1]
+rerun.GO.analysis <- F
+use.just.homs <- T   # To be want to do the analysis using just homozygotes?
+fac.meth <- c("varimax", "promax")[1]
+
+
 
 resimp <- readRDS(file = control$file.resimp)
 resl.comp.fac <- readRDS(file = control$file_raw_factor_results)
@@ -8,13 +20,12 @@ phmap <- Data_all$impc$phmap
 library("foreach")
 
 ph.use <- Data_all$impc$phord
-use.just.homs <- T   # To be want to do the analysis using just homozygotes?
-fac.meth <- c("varimax", "promax")[1]
 if(use.just.homs){
   true.use <- unique(resimp[resimp$line.type == "trueMut" & resimp$zyg == 1, "geno"])
 } else {
   true.use <- unique(resimp[resimp$line.type == "trueMut", "geno"])
 }
+procord <- Data_all$impc$procord
 nph <- length(ph.use)
 ng <- length(true.use)
 dirv <- c("up", "do", "bo")
@@ -34,43 +45,15 @@ resl.out[[fac.meth]]$th <- resimp[, paste0(fac.meth, ".th.final")][1]
 ph_high <- names(sort(abs(resl.comp[[control$mv_meth_nam_use]]$facs.varimax[, "fac_7"]), decreasing = T))
 
 Data_all$impc$phmap[match(ph_high[1:5], Data_all$impc$phmap$ph), ]
-# phmap[grep("hol", phmap$nam), ]
-# hist()
-# 
-# hist(Data_all$impc$Y_raw[true.use, "IMPC_CBC_015_001"])
-# hist(resl.out$eb$mn[true.use, "IMPC_CBC_015_001"], breaks = 40)
-# abline(v = c(-1, 1))
-# hist(resl.out$eb$mn[true.use, ], breaks = 40)
-# abline(v = c(-1, 1))
-# 
-# 
-# mean(abs(resl.out$eb$mn[true.use, "IMPC_CBC_015_001"]) > 1)
-# mean(abs(resl.out$eb$mn[true.use, ]) > 1)
 
-# fl <- list()
-# fl$t <- resl.comp.fac[[control$mv_meth_nam_use]]$mn / resl.comp.fac[[control$mv_meth_nam_use]]$sd
-# fl$th <- fl$t
-# fl$th[] <- resimp[, paste0(fac.meth, ".th.final")][1]
-
-# str(fl, m = 1)
-# apply(Data_all$impc$Y_raw[Data_all$impc$linemap$geno[Data_all$impc$linemap$line.type == "trueMut"], ], 2, sd, na.rm = T)
-# apply(Data_all$impc$Y_raw[Data_all$impc$linemap$geno[Data_all$impc$linemap$line.type == "trueMut"], ], 2, mean, na.rm = T)
-
-# mn.th.big <- 1
-
-sd_mult_big_eff_thresh <- 2
 mvphen_effect_size_thresh <- outer(rep(1, nrow(resl.out$eb$mn)), apply(resl.out$eb$mn, 2, sd, na.rm = T)) * sd_mult_big_eff_thresh
 uv_effect_size_thresh <- outer(rep(1, nrow(resl.out$uv$mn)), apply(resl.out$uv$mn, 2, sd, na.rm = T)) * sd_mult_big_eff_thresh
 fac_effect_size_thresh <- outer(rep(1, nrow(resl.out[[fac.meth]]$mn)), apply(resl.out[[fac.meth]]$mn, 2, sd, na.rm = T)) * sd_mult_big_eff_thresh
 resl.out$eb$signsig.bigeff <- (abs(resl.out$eb$t) > resl.out$eb$th & abs(resl.out$eb$mn) >= mvphen_effect_size_thresh) * sign(resl.out$eb$t)
 resl.out$uv$signsig.bigeff <- (abs(resl.out$uv$t) > resl.out$uv$th & abs(resl.out$uv$mn) >= uv_effect_size_thresh) * sign(resl.out$uv$t)
-# resl.out$eb$signsig.bigeff <- (abs(resl.out$eb$t) > resl.out$eb$th & abs(resl.out$eb$mn) >= mn.th.big) * sign(resl.out$eb$t)
-# resl.out$uv$signsig.bigeff <- (abs(resl.out$uv$t) > resl.out$uv$th & abs(resl.out$uv$mn) >= mn.th.big) * sign(resl.out$uv$t)
 resl.out[[fac.meth]]$signsig.bigeff <- (abs(resl.out[[fac.meth]]$t) > resl.out[[fac.meth]]$th & 
                                           abs(resl.out[[fac.meth]]$mn) >= fac_effect_size_thresh) * 
                                             sign(resl.out[[fac.meth]]$t)
-
-
 
 sigl <- list()
 sigl$uv <- sigl$uv.bigeff <- sigl$mv <- sigl$mv.bigeff <- sigl$f <- list()
@@ -90,20 +73,9 @@ sigl$f$up <- resl.out[[fac.meth]]$signsig.bigeff[true.use, facnam] == 1
 sigl$f$do <- resl.out[[fac.meth]]$signsig.bigeff[true.use, facnam] == -1
 sigl$f$bo <- resl.out[[fac.meth]]$signsig.bigeff[true.use, facnam] != 0
 
-# colSums(sigl$f$bo)
 colSums(sigl$f$bo)
 colSums(sigl$mv.bigeff$bo)
 
-# 
-# apply(c, 2, sd, na.rm = T)
-# apply(resl.out$varimax$mn[true.use, ], 2, sd, na.rm = T)
-# boxplot(resl.out$eb$mn[true.use, ])
-# 
-# 
-# str(resl.out$varimax, m = 1)
-# sum(sigl$mv.bigeff$bo)
-# sum(sigl$uv.bigeff$bo, na.rm = T)
-# length(true.use)
 
 gene.all.num <- unique(sapply(strsplit(true.use, spl = "_"), function(v) v[1]))
 genemap.in <- Data_all$impc$genemap[Data_all$impc$genemap$genotype_id %in% gene.all.num, ]
@@ -155,31 +127,15 @@ for(restype in c("uv", "mv", "mv.bigeff", "uv.bigeff", "f")[1:5]){#restype <- "u
   }
 }
 
-dirc <- "bo"
-nperm <- 1000
-fwer.th <- .05
-methc <- c("ph", "proc", "fac")[3]
-run.GO.analysis <- F
-# go_file_use <- gsub("go", paste0("go_th_", mn.th.big), control$file.go.results)
-go_file_use <- gsub("go", paste0("go_sdmult_th_", sd_mult_big_eff_thresh), control$file.go.results)
-
-
 
 #############################################
 # Gene enrichment analysis
-if (run.GO.analysis) {
-  # if("cl" %in% ls())
-  #   parallel::stopCluster(cl)
+go_file_use <- gsub("go", paste0("go_sdmult_th_", sd_mult_big_eff_thresh), control$file.go.results)
+if (rerun.GO.analysis | !file.exists(go_file_use)) {
   cl <- parallel::makeCluster(20)
   doParallel::registerDoParallel(cl = cl)
-  # featvc <- switch(methc, ph = ph.use, proc = procord, fac = facnam)
   featvc <- c(ph.use, facnam)
-  # library(GOfuncR)
   parallel::clusterCall(cl, function(x) .libPaths(x), .libPaths())
-  # phc=phmap[match(c("Locomotor activity", "Sodium")[1], phmap$nam), "ph"]
-  # restype <- "mv.bigeff"
-  # facnum_look <- 2
-  # phc = featvc[facnum_look]#
   outl <- foreach(phc = featvc, .verbose = T, .errorhandling = "pass", .packages = c("GOfuncR", "Mus.musculus")) %dopar% {
     tryer <- try({
       allresl <- list()
@@ -205,11 +161,6 @@ if (run.GO.analysis) {
           allresl[[restype]] <- allRes
       }
     })
-    # allRes
-    # phc
-    # ph_high <- names(sort(abs(resl.comp[[control$mv_meth_nam_use]]$facs.varimax[, paste0("fac_", facnum_look)]), decreasing = T))
-    # Data_all$impc$phmap[match(ph_high[1:5], Data_all$impc$phmap$ph), ]
-    
     if(!inherits(tryer, "try-error")) {
       return(allresl)
     } else {
@@ -217,20 +168,6 @@ if (run.GO.analysis) {
     }
   }
   parallel::stopCluster(cl)
-  # if (methc == "ph") {
-  #   names(outl) <- phmap[match(ph.use, phmap$ph), "nam"]
-  #   for (j in 1:length(outl)) {
-  #     if (NROW(outl[[j]]$uv.bigeff) > 0) {
-  #       outl[[j]]$uv.bigeff$ph <- names(outl)[j]
-  #     }
-  #     if (NROW(outl[[j]]$mv.bigeff) > 0) {
-  #       outl[[j]]$mv.bigeff$ph <- names(outl)[j]
-  #     }
-  #   }
-  # }
-  # if (methc %in% c("proc", "fac")) {
-  #   names(outl) <- featvc
-  # }
   featvc_full_ph_nam <- Data_all$impc$phmap[match(featvc, Data_all$impc$phmap$ph), "nam"]
   featvc_full_ph_nam[is.na(featvc_full_ph_nam)] <- featvc[is.na(featvc_full_ph_nam)]
   names(outl) <- featvc_full_ph_nam
@@ -258,10 +195,96 @@ if (run.GO.analysis) {
   load(file = go_file_use)
 }
 
+
+library(help = "Mus.musculus")
+genfacl[[restype]][[dirc]][[phc]]$measured
+
 names(outl)
-sapply(outl[facnam], function(x) nrow(x$f))
-outl[facnam]
-outl[[c("Locomotor activity", "Sodium")[2]]]
+length(unique(go.gene.dat$go_id))
+
+str(go.gene.dat)
+names(outl.sub)
+sort(phmap$nam)
+
+co_enrich <- list(list(impc = "Locomotor activity", go = "locomotory behavior"),
+                  list(impc = "Bone Area", go = "locomotory behavior"),
+                  list(impc = "Click-evoked ABR threshold", go = "sensory perception of sound"),
+                  list(impc = "% Pre-pulse inhibition - PPI4", go = "sensory perception of sound"))
+
+
+
+
+
+
+control$dropbox_small_table_dir <- file.path(control$dropbox_table_dir, "little_go_tables")
+dir.create(control$dropbox_small_table_dir, showWarnings = FALSE)
+
+# go_inlab <- "GO in"
+# go_outlab <- "GO out"
+# impc_inlab <- "IMPC in"
+# impc_outlab <- "IMPC out"
+# go_inlab <- "In gene set"
+# go_outlab <- "Not in"
+# impc_inlab <- "In"
+# impc_outlab <- "Not in"
+# inoutvec <- c("In", "Out")
+inoutvec <- c("Yes", "No")
+go_inlab <- inoutvec[1]
+go_outlab <- inoutvec[2]
+impc_inlab <- inoutvec[1]
+impc_outlab <- inoutvec[2]
+for (pair_num in 1:length(co_enrich)) {#pair_num <- 2
+  impc_ph_name_curr <- co_enrich[[pair_num]]$impc
+  impc_ph_code_curr <- phmap[match(impc_ph_name_curr, phmap$nam), "ph"]
+  go_term_name_curr <- co_enrich[[pair_num]]$go
+  go_term_code_curr <- go.gene.dat[match(go_term_name_curr, go.gene.dat$go_name), "go_id"]
+  
+  impc_ph_mv_hits <- genfacl$mv.bigeff$bo[[impc_ph_code_curr]]$hits
+  impc_ph_uv_hits <- genfacl$uv.bigeff$bo[[impc_ph_code_curr]]$hits
+  impc_ph_measured_mv <- genfacl$mv.bigeff$bo[[impc_ph_code_curr]]$measured
+  impc_ph_measured_uv <- genfacl$uv.bigeff$bo[[impc_ph_code_curr]]$measured
+  go_term_tab <- go.gene.dat[go.gene.dat$go_name == go_term_name_curr, ]
+  # go_term_measured <- intersect(impc_ph_measured, go_term_tab$entrez)
+  go_enrich_df_mv <- data.frame(all_measured = impc_ph_measured_mv, 
+                                impc_hit = ifelse(impc_ph_measured_mv %in% impc_ph_mv_hits, 2, 1),
+                                go_hit = ifelse(impc_ph_measured_mv %in% go_term_tab$entrez, 2, 1))
+  go_enrich_df_uv <- data.frame(all_measured = impc_ph_measured_uv, 
+                                impc_hit = ifelse(impc_ph_measured_uv %in% impc_ph_uv_hits, 2, 1),
+                                go_hit = ifelse(impc_ph_measured_uv %in% go_term_tab$entrez, 2, 1))
+  
+  tab_mv <- table(go_enrich_df_mv$go_hit, go_enrich_df_mv$impc_hit)
+  tab_uv <- table(go_enrich_df_uv$go_hit, go_enrich_df_uv$impc_hit)
+  dimnames(tab_mv) <- dimnames(tab_uv) <- list(c(go_outlab, go_inlab), c(impc_outlab, impc_inlab))
+  print(co_enrich[[pair_num]])
+  pval_uv <- fisher.test(tab_uv)$p.value
+  pval_mv <- fisher.test(tab_mv)$p.value
+  write.table(formatC(pval_uv, digits = 2, format = "g"), file = paste0(control$dropbox_small_table_dir, "/uv_pval_", pair_num, ".txt"), 
+              col.names = F, row.names = F, quote = F)
+  write.table(formatC(pval_mv, digits = 2, format = "g"), file = paste0(control$dropbox_small_table_dir, "/mv_pval_", pair_num, ".txt"), 
+              col.names = F, row.names = F, quote = F)
+  
+  print(tab_mv)
+  print(tab_uv)
+  print(pval_mv)
+  print(pval_uv)
+  other_tab <- outl.sub[[impc_ph_name_curr]]$mv.bigeff
+  print(other_tab[other_tab$node_name == go_term_name_curr, ])
+  tabout_mv <- xtable::print.xtable(xtable::xtable(tab_mv, caption = "MV analysis"), floating = FALSE, caption.placement = 'top') 
+  cat(tabout_mv, file = paste0(control$dropbox_small_table_dir, "/go_tab_mv_", pair_num, ".txt"))
+  print(other_tab[other_tab$node_name == go_term_name_curr, ])
+  tabout_uv <- xtable::print.xtable(xtable::xtable(tab_uv, caption = "UV analysis"), floating = FALSE, caption.placement = 'top') 
+  cat(tabout_uv, file = paste0(control$dropbox_small_table_dir, "/go_tab_uv_", pair_num, ".txt"))
+  # cat(tabout, file = paste0(control$dropbox_small_table_dir, "/go_tab_", impc_ph_code_curr, "_", gsub(":", "_", go_term_code_curr), ".txt"))
+  impc_ph_name_curr_out <- gsub("%", "\\\\%", impc_ph_name_curr)
+  write.table(impc_ph_name_curr_out, file = paste0(control$dropbox_small_table_dir, "/impc_ph_name_", pair_num, ".txt"), 
+              col.names = F, row.names = F, quote = F)
+  write.table(go_term_name_curr, file = paste0(control$dropbox_small_table_dir, "/go_term_name_", pair_num, ".txt"), 
+              col.names = F, row.names = F, quote = F)
+  
+}#
+
+
+
 gonamv <- unlist(lapply(outl, function(x) c(x$uv$node_name, x$mv$node_name, x$mv.bigeff$node_name, x$uv.bigeff$node_name)))
 goidv <- unlist(lapply(outl, function(x) c(x$uv$node_id, x$mv$node_id, x$mv.bigeff$node_id, x$uv.bigeff$node_id)))
 gonamidmap <- unique(data.frame(nam = gonamv, id = goidv))
@@ -325,8 +348,10 @@ for(numc in save.prop)
 ngo.plth <- 3#5
 nph.plth <- 3#3
 clustlinkage <- c("ward.D", "ward.D2", "single", "complete", "average")[1]
+dist_method <- c("euclidean", "maximum", "manhattan", "canberra", "binary", "minkowski")[3]
 mvmat.pl <- mvmat
 uvmat.pl <- uvmat
+# mvmat.pl <- mvmat.pl[rowSums(!is.na(mvmat.pl)) >= ngo.plth, ] 
 for(j in 1:10){
   mvmat.pl <- mvmat.pl[rowSums(!is.na(mvmat.pl)) >= ngo.plth, ] 
   mvmat.pl <- mvmat.pl[, colSums(!is.na(mvmat.pl)) >= nph.plth] 
@@ -337,24 +362,26 @@ mvmat.pl.nona[is.na(mvmat.pl.nona)] <- 0
 uvmat.pl.nona <- uvmat.pl
 uvmat.pl.nona[!is.na(uvmat.pl.nona)] <- 1
 uvmat.pl.nona[is.na(uvmat.pl.nona)] <- 0
-mvmat.pl <- mvmat.pl[hclust(dist(mvmat.pl.nona), method = clustlinkage)$order, ]
-mvmat.pl <- mvmat.pl[, hclust(dist(t(mvmat.pl.nona)), method = clustlinkage)$order]
+# for (j in 1:10) {
+  mvmat.pl <- mvmat.pl[hclust(dist(mvmat.pl.nona, method = dist_method), method = clustlinkage)$order, ]
+  mvmat.pl <- mvmat.pl[, hclust(dist(t(mvmat.pl.nona), method = dist_method), method = clustlinkage)$order]
+# }
 uvmat.pl <- uvmat[rownames(mvmat.pl), colnames(mvmat.pl)]
 mode(mvmat.pl) <- mode(uvmat.pl) <- "numeric"
 mvmat.cl <- mvmat.pl
 uvmat.pl.nona <- uvmat
 uvmat.pl.nona[!is.na(uvmat.pl.nona)] <- 1
 uvmat.pl.nona[is.na(uvmat.pl.nona)] <- 0
-uvmat.cl <- uvmat[hclust(dist(uvmat.pl.nona), method = clustlinkage)$order, ]
-uvmat.cl <- uvmat.cl[, hclust(dist(t(uvmat.pl.nona)), method = clustlinkage)$order]
+# for (j in 1:10) {
+  uvmat.cl <- uvmat[hclust(dist(uvmat.pl.nona, method = dist_method), method = clustlinkage)$order, ]
+  uvmat.cl <- uvmat.cl[, hclust(dist(t(uvmat.pl.nona), method = dist_method), method = clustlinkage)$order]
+# }
 mv.go.ph <- lapply(rownames(mvmat.cl), function(x) colnames(mvmat.cl)[which(!is.na(mvmat.cl[x, ]))])
 uv.go.ph <- lapply(rownames(uvmat.cl), function(x) colnames(uvmat.cl)[which(!is.na(uvmat.cl[x, ]))])
 names(mv.go.ph) <- rownames(mvmat.cl)
 names(uv.go.ph) <- rownames(uvmat.cl)
 mv.go.proc <- lapply(mv.go.ph, function(x) unique(phmap[match(x, phmap$nam), "procnam"]))
 uv.go.proc <- lapply(uv.go.ph, function(x) unique(phmap[match(x, phmap$nam), "procnam"]))
-
-
 
 subplot.go.terms <- c("equilibrioception",  "nervous system process", 
                       "sensory perception",  "inner ear receptor cell development", 
@@ -394,7 +421,7 @@ for(j in 1:length(outl.sub))
   allout <- rbind(allout, outl.sub[[j]]$mv.bigeff)
 allout <- allout[order(allout$raw_p_overrep), ]
 allsub <- allout[match(subplot.go.terms, allout$node_name), ]
-
+str(allout)
 gotab.paper <- allsub[, c("node_name", "ph", "raw_p_overrep")]
 gotab.paper$proc <- phmap[match(gotab.paper$ph, phmap$nam), "procnam"]
 gotab.paper$nup <- mvmat.nup[cbind(gotab.paper$node_name, gotab.paper$ph)]
@@ -415,33 +442,87 @@ for(j in 1:ncol(gotab.paper)){
 gotab.paper
 
 
-unique(phmap$procnam)
-labcut <- paste0(substr(rownames(zpl), 1, ncut), ifelse(nchar(rownames(zpl)) > ncut, "...", ""))
+ph_unique <- sort(unique(allout$ph))
+go_unique <- sort(unique(allout$node_name))
+dput(names(allout))
+fields_out <- data.frame(old = c("node_name", "ph", "raw_p_overrep"), 
+                         new = c("GO gene set", "IMPC gene set", "Co-enrich p"))
+
+n_go_pval_tables <- 8
+go_terms_tables <- data.frame(set = c("sensory perception of sound", "locomotory behavior", 
+                                      "regulation of lipid biosynthetic process", "brain development", 
+                                      "chemical synaptic transmission", "growth", "circulatory system development",
+                                      "anatomical structure development",
+                                      "Fat/Body weight", "Insulin"),
+                              impcgo = c("go", "go", "go", "go", "go",  "go", "go", "go", "impc", "impc"))[1:n_go_pval_tables, ]
+go_terms_tables <- go_terms_tables[order(match(go_terms_tables$set, rev(rownames(mvmat.pl)))), ]
+for (j in 1:nrow(go_terms_tables)) {
+  set_curr <- go_terms_tables$set[j]
+  if (go_terms_tables$impcgo[j] == "impc") {
+    fields_out_use <- fields_out[fields_out$new != "IMPC gene set", ]
+    tab_curr <- allout[allout$ph == set_curr, fields_out_use$old]
+  }
+  if (go_terms_tables$impcgo[j] == "go") {
+    fields_out_use <- fields_out[fields_out$new != "GO gene set", ]
+    tab_curr <- allout[allout$node_name == set_curr, fields_out_use$old]
+  }
+  # max_nchar <- 35
+  # tab_curr[, 1] <- paste0(substr(tab_curr[, 1], 1, max_nchar), ifelse(nchar(tab_curr[, 1]) > max_nchar, "...", ""))
+  # tab_curr
+  name_out <- paste0("(", letters[j], ") ", toupper(go_terms_tables$impcgo[j]), " gene set \\emph{", set_curr, "}")
+  name_out_short <- set_curr
+  tab_curr$raw_p_overrep <- formatC(tab_curr$raw_p_overrep, digits = 2, format = "g")
+  names(tab_curr) <- fields_out_use$new
+  # tab_curr[, 1] <- paste0("\\textit{", tab_curr[, 1], "}")
+  tabout <- xtable::print.xtable(xtable::xtable(tab_curr, caption = "", align = c("l", "p{5cm}", "r")), floating = FALSE, 
+                                 caption.placement = 'top', include.rownames = FALSE) 
+  cat(tabout, file = paste0(control$dropbox_small_table_dir, "/go_impc_enrich_", j, ".txt"))
+  
+  # name_out <- set_curr
+  write.table(name_out, file = paste0(control$dropbox_small_table_dir, "/go_impc_enrich_name_", j, ".txt"), 
+              col.names = F, row.names = F, quote = F)
+  write.table(name_out_short, file = paste0(control$dropbox_small_table_dir, "/go_impc_enrich_name_short_", j, ".txt"), 
+              col.names = F, row.names = F, quote = F)
+}
+
+phmap <- Data_all$impc$phmap
+genemap <- Data_all$impc$genemap
+y1 <- resl.out$eb$signsig[, phmap[phmap$nam == "Insulin", "ph"]]
+y2 <- resl.out$eb$signsig[, phmap[phmap$nam == "Fat/Body weight", "ph"]]
+table(y1, y2)
+
+procord
+impc_gene_ids <- sapply(strsplit(names(which(y1 == -1 & y2 == 1)), split = "_"), function(x) x[[1]])
+genemap[match(impc_gene_ids, genemap$genotype_id), ]
+str(genemap)
+impc_gene_ids %in% genemap$genotype_id
+phmap[phmap$nam == "Fat mass", "ph"]
+str(resl.out$eb$signsig)
 
 
 for(go.plot.type in c("all", "sub")){
   for(mod.type in c("mv", "uv")){
     go.use <- switch(go.plot.type, all = rownames(mvmat.pl), sub = subplot.go.terms)
-    fnamc <- paste0(mod.type, "_", go.plot.type, "_go_heatmap.jpg")
-  #   
-  # for(fnamc in c("mv_go_heatmap.jpg", "uv_go_heatmap.jpg")){
+    fnamc <- paste0(mod.type, "_", go.plot.type, "_go_heatmap_th_", sd_mult_big_eff_thresh, ".jpg")
     zpl <- switch(mod.type, mv = mvmat.pl[go.use, ], uv = uvmat.pl[go.use, ])
-    # zpl <- zpl[, colMeans(is.na;(zpl)) < 1]
-    # jpeg(paste(control$figure_dir, "/", fnamc, sep = ""), 8, 7, units = "in", res = 500)
-    jpeg(paste(control$figure_dir, "/", fnamc, sep = ""), 8, ifelse(go.plot.type == "all", 12, 6), units = "in", res = 500)
-    par(oma = c(11, 13, .5, 0.5), mar = c(0, 0, 0, 0))
+    jpeg(filename = paste(control$figure_dir, "/", fnamc, sep = ""), 
+         width = 8, height = ifelse(go.plot.type == "all", 12, 6), 
+         units = "in", res = 500)
+    par(oma = c(12, 13, 2, 2), mar = c(0, 0, 0, 0))
     cexlab <- .6
     image(x = 1:ncol(zpl), y = 1:nrow(zpl), z = t(zpl), xlab = "", ylab = "", xaxt = "n", yaxt = "n", col = control$heat_col_palette, zlim = c(-1, 1))
     ncut <- 48
     axis(side = 2, labels = NA, at = 1:nrow(zpl), las = 2, cex.axis = cexlab)
+    # axis(side = 3, labels = c("(c)", "(d)"), at = match(go_terms_tables$set[3:4], colnames(zpl)), las = 1, cex.axis = cexlab)
+    axis(side = 4, labels = paste0("(", letters[1:n_go_pval_tables], ")"), 
+         at = match(go_terms_tables$set, rownames(zpl)), las = 1, cex.axis = cexlab)
     labcut <- paste0(substr(rownames(zpl), 1, ncut), ifelse(nchar(rownames(zpl)) > ncut, "...", ""))
-    # phlabcut <- paste0(substr(colnames(zpl), 1, ncut), ifelse(nchar(colnames(zpl)) > ncut, "...", ""))
     mtext(side = 2, line = 1, text = labcut, at = 1:nrow(zpl), las = 2, cex = cexlab)
     axis(side = 1, labels = NA, at = 1:ncol(zpl), las = 2, cex.axis = cexlab)
     labcut <- paste0(substr(colnames(zpl), 1, ncut), ifelse(nchar(colnames(zpl)) > ncut, "...", ""))
-    # mtext(side = 3, line = 1, text = labcut, at = 1:ncol(zpl), las = 2, cex = cexlab)
     lincol <- "grey"
     abline(v = 1:ncol(zpl) - .5, col = lincol)
+    abline(v = 1:ncol(zpl) - 1.5, col = lincol)
     abline(h = 1:nrow(zpl) - .5, col = lincol)
     phmap.sub <- phmap[phmap$nam %in% colnames(zpl), ]
     proctab <- sort(table(phmap.sub$procnam), decreasing = T)
@@ -468,12 +549,13 @@ for(go.plot.type in c("all", "sub")){
   }
 }
 
+
 ###################################################################
 # Table of GO term enrichment comparing UV and MV models
 uvrows <- sapply(outl, function(x) NROW(x$uv.bigeff))
 mvrows <- sapply(outl, function(x) NROW(x$mv.bigeff))
 tabuvmvcomp <- table(uvrows, mvrows)
-binl <- list(0, 1, 2, 3:5, 6:10, 11:20, 20:50)
+# binl <- list(0, 1, 2, 3:5, 6:10, 11:20, 20:50)
 binl <- list(0, 1:5, 6:10, 11:20, 20:50)
 binnam <- sapply(binl, function(x) if(length(x) == 1){ x} else {paste(min(x), max(x), sep = "-")})
 nb <- length(binl)
@@ -485,340 +567,366 @@ for(j in 1:nb){
 }
 tabcomp
 library(xtable)
-tabout <- print(xtable(tabcomp, label = "tab:uvmvgocounts", caption = "Number of enriched BP GO terms per phenotype for the UV (left) and MV (top) models"),
+tabout <- print(xtable(tabcomp, label = "tab:uvmvgocounts", 
+                       caption = "Number of co-enriched  GO term gene sets for each IMPC gene set for the UV (left) and MV (top) models"),
                 caption.placement = "top")
-cat(tabout, file = paste(control$dropbox_text_numbers_dir, "/mvugotab.txt", sep = ""))
+cat(tabout, file = paste(control$dropbox_table_dir, "/mvugotab_th_", sd_mult_big_eff_thresh, ".txt", sep = ""))
 
 
+###################################################################
+# Table of GO term enrichment comparing UV and MV models
 
 
-
-
-
-
-
-############################################################
-# Just checking KEGG for enrichment
-# keggtab <- toTable(org.Mm.egPATH)
-keggtab <- toTable(org.Mm.egGO)
-keggtab2 <- keggtab[keggtab$gene_id %in% genemap2$entrez, ]
-n.min.at.term <- 1
-str(keggtab2)
-idc <- c("go_id", "path_id")[1]
-# keggtabc <- table(keggtab2$path_id)
-keggtabc <- table(keggtab2[, idc])
-keggkeep <- names(keggtabc)[keggtabc >= n.min.at.term]
-keggtab3 <- keggtab2[keggtab2[, idc] %in% keggkeep, ]
-keggentun <- unique(keggtab3$gene_id)
-keggpathun <- unique(keggtab3[, idc])
-entrez2kegg <- lapply(keggentun, function(x) keggtab3[keggtab3$gene_id == x, "path_id"])
-names(entrez2kegg) <- keggentun
-ensun <- unique(names(entrez2kegg))
-ng <- length(ensun)
-nk <- length(keggpathun)
-keggensmat <- matrix(0, ng, nk, dimnames = list(ensun, keggpathun))
-for(ensc in names(entrez2kegg)){
-  keggensmat[ensc, which(colnames(keggensmat) %in% entrez2kegg[[ensc]])] <- 1
-}
-perml <- list()
-methc <- "mv.bigeff"
-pvalmatl <- list()
-nperm <- 1
-for(i in 1:(nperm + 1)){
-  if(i == 1)
-    keggensmat.use <- keggensmat
-  if(i > 1)
-    keggensmat.use[] <- c(keggensmat[sample(1:nrow(keggensmat)), ])
-    # keggensmat.use[] <- c(keggensmat[, sample(1:ncol(keggensmat))])
-  pvalmat <- matrix(NA, nph, nk, dimnames = list(ph.use, keggpathun))
-  for(phc in ph.use){
-    print(phc)
-    ensmeasv <- genfacl[[methc]][[dirc]][[phc]]$measured
-    enshitv.use <- enshitv <- genfacl[[methc]][[dirc]][[phc]]$hits
-    # if(i == 1)
-    #   enshitv.use <- enshitv
-    # if(i > 1)
-    #   enshitv.use <- sample(ensmeasv, length(enshitv))
-    n.hit.in.kegg <- colSums(keggensmat.use[rownames(keggensmat.use) %in% enshitv.use, , drop = F])
-    n.hit.not.in.kegg <- colSums(1 - keggensmat.use[rownames(keggensmat.use) %in% enshitv.use, , drop = F])
-    n.measnothit.in.kegg <- colSums(keggensmat.use[rownames(keggensmat.use) %in% ensmeasv, , drop = F]) - n.hit.in.kegg
-    n.measnothit.not.in.kegg <- colSums(1 - keggensmat.use[rownames(keggensmat.use) %in% ensmeasv, , drop = F]) - n.hit.not.in.kegg
-    for(keggc in keggpathun){
-      fisher.tab <- matrix(c(n.hit.in.kegg[keggc], n.hit.not.in.kegg[keggc], n.meas.in.kegg[keggc], n.meas.not.in.kegg[keggc]), 2, 2)
-      fishout <- fisher.test(fisher.tab)
-      pvalmat[phc, keggc] <- fishout$p.value
-    }
-    pvalmatl[[i]] <- pvalmat
+str(uvmat)
+uvcols <- rowSums(!is.na(uvmat))#sapply(outl, function(x) NCOL(x$uv.bigeff))
+mvcols <- rowSums(!is.na(mvmat))#sapply(outl, function(x) NROW(x$mv.bigeff))
+tabuvmvcomp <- table(uvcols, mvcols)
+# binl <- list(0, 1, 2, 3:5, 6:10, 11:20, 20:50)
+binl <- list(0, 1:5, 6:10, 11:20, 20:50)
+binnam <- sapply(binl, function(x) if(length(x) == 1){ x} else {paste(min(x), max(x), sep = "-")})
+nb <- length(binl)
+tabcomp <- matrix(NA, nb, nb, dimnames = list(binnam, binnam))
+for(j in 1:nb){
+  for(k in 1:nb){
+    tabcomp[j, k] <- sum(tabuvmvcomp[rownames(tabuvmvcomp) %in% as.character(binl[[j]]), colnames(tabuvmvcomp) %in% as.character(binl[[k]])])
   }
-}  
-
-
-#############################################
-# Compare to mousenet network
-# download.file(url = "https://www.inetbio.org/mousenet/dl_conv.php?f=MouseNetV2&s=0&t=0",
-#     destfile = paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2.txt"))
-# download.file(url = "https://www.inetbio.org/mousenet/dl_conv.php?f=MouseNetV2_GS&s=0&t=0",
-#               destfile = paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_gs.txt"))
-# download.file(url = "https://www.inetbio.org/mousenet/dl_conv.php?f=MM-LC&s=0&t=0",
-#               destfile = paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_lc.txt"))
-# download.file(url = "https://www.inetbio.org/mousenet/dl_conv.php?f=MM-CX&s=0&t=0",
-#               destfile = paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_cx.txt"))
-# download.file(url = "https://www.inetbio.org/mousenet/dl_conv.php?f=MM-GN&s=0&t=0",
-#               destfile = paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_gn.txt"))
-# download.file(url = "https://www.inetbio.org/mousenet/dl_conv.php?f=MM-PG&s=0&t=0",
-#               destfile = paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_pg.txt"))
-mousenet <- read.table(paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2.txt"), sep = "\t")
-mousenet.gs <- read.table(paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_gs.txt"), sep = "\t")
-mousenet.lc <- read.table(paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_lc.txt"), sep = "\t")
-mousenet.cx <- read.table(paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_cx.txt"), sep = "\t")
-mousenet.gn <- read.table(paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_gn.txt"), sep = "\t")
-mousenet.pg <- read.table(paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_pg.txt"), sep = "\t")
-colnames(mousenet) <- colnames(mousenet.gs) <- colnames(mousenet.lc) <- 
-  colnames(mousenet.cx) <- colnames(mousenet.gn) <- colnames(mousenet.pg) <- c("eg1", "eg2", "lr")
-
-if("cl" %in% ls())
-  stopCluster(cl)
-cl <- makeCluster(12)
-registerDoParallel(cl = cl)
-dirc <- "bo"
-methc <- c("ph", "proc", "fac")[1]
-featvc <- switch(methc, ph = ph.use, proc = procord, fac = facnam)
-
-outl <- foreach(phc = featvc, .verbose = T, .errorhandling = "pass") %dopar% {
-  # phc = ph.use[1]
-  pvall <- list()
-  for(restype in c("uv.bigeff", "mv.bigeff")){
-    myInterestingGenes <- genfacl[[restype]][[dirc]][[phc]]$hits
-    allPossibleGenes <- genfacl[[restype]][[dirc]][[phc]]$measured
-    all(myInterestingGenes %in% allPossibleGenes)
-    # myInterestingGenes.symbol <- c(na.omit(sym2eg[match(myInterestingGenes, sym2eg$gene_id), "symbol"]))
-    # allPossibleGenes.symbol <- c(na.omit(sym2eg[match(allPossibleGenes, sym2eg$gene_id), "symbol"]))
-    # mousenet.sub <- mousenet[(mousenet$eg1 %in% allPossibleGenes | mousenet$eg2 %in% allPossibleGenes), ]
-    mousenet.use <- list(mousenet.gs, mousenet.lc, mousenet.cx, mousenet.gn, mousenet.pg, mousenet)[[1]]
-    # if(any(!is.na(mousenet.use$lr))){
-    #   mousenet.sub <- mousenet.use[which((mousenet.use$eg1 %in% allPossibleGenes & mousenet.use$eg2 %in% allPossibleGenes) & mousenet.use$lr > 0), ]
-    # } else {
-    mousenet.sub <- mousenet.use[(mousenet.use$eg1 %in% allPossibleGenes & mousenet.use$eg2 %in% allPossibleGenes), ]
-    # }
-    str(mousenet.sub)
-    npair <- sum(mousenet.sub$eg1 %in% myInterestingGenes & mousenet.sub$eg2 %in% myInterestingGenes)
-    perm.npair <- c()
-    for(i in 1:1000){
-      myInterestingGenes.null <- sample(allPossibleGenes, length(myInterestingGenes))
-      perm.npair[i] <- sum(mousenet.sub$eg1 %in% myInterestingGenes.null & mousenet.sub$eg2 %in% myInterestingGenes.null)
-    }
-    pval.est <- mean(perm.npair >= npair)
-    pvall[[restype]] <- pval.est
-  }
-  return(list(pval = pvall, ph = phc))
 }
-stopCluster(cl)
-if(methc == "ph")
-  names(outl) <- phmap[match(ph.use, phmap$ph), "nam"]
-if(methc %in% c("proc", "fac"))
-  names(outl) <- featvc#phmap[match(ph.use, phmap$ph), "nam"]
-pvalv.uv <- sapply(outl, function(v) v$pval$uv.bigeff)
-pvalv.mv <- sapply(outl, function(v) v$pval$mv.bigeff)
-qvalv.uv <- p.adjust(pvalv.uv, meth = "BH")
-qvalv.mv <- p.adjust(pvalv.mv, meth = "BH")
-thc <- .05
-table(pvalv.uv < thc, pvalv.mv < thc)
-table(qvalv.uv < thc, qvalv.mv < thc)
-names(qvalv.mv)[qvalv.mv < thc]
-
-mean(p.adjust(pvalv.mv, meth = "BH") < thc)
-
-mean(pvalv.mv < thc)
-mean(pvalv.uv < thc)
+tabcomp
+library(xtable)
+tabout <- print(xtable(tabcomp, label = "tab:uvmv_enriched_counts_num_impc_per_go", 
+                       caption = "Number of co-enriched IMPC gene sets for each GO term gene set for the UV (left) and MV (top) models"),
+                caption.placement = "top")
+cat(tabout, file = paste(control$dropbox_table_dir, "/uvmv_enriched_counts_num_impc_per_go_th_", sd_mult_big_eff_thresh, ".txt", sep = ""))
 
 
 
-###################
-restype <- "mv.bigeff"
-methc <- c("ph", "proc", "fac")[2]
-featvc <- switch(methc, ph = ph.use, proc = procord, fac = facnam)
-pvalv <- c()
-for(phc in featvc){
-  myInterestingGenes <- genfacl[[restype]][[dirc]][[phc]]$hits
-  allPossibleGenes <- genfacl[[restype]][[dirc]][[phc]]$measured
-  geneList.bin <- as.integer(allPossibleGenes %in% myInterestingGenes)
-  maptab <- data.frame(eg = allPossibleGenes, sig = geneList.bin)
-  maptab[, c("loc", "chr")] <- sym2eg[match(allPossibleGenes, sym2eg$gene_id), c("loc", "chr")]
-  maptab <- maptab[order(maptab$chr, maptab$loc), ]
-  maptab$sym <- sym2eg[match(maptab$eg, sym2eg$gene_id), "symbol"]
-  chrun <- unique(maptab$chr)
-  ntot <- nrow(maptab)
-  nsig <- sum(maptab$sig)
-  # str(maptab)
-  table(maptab$chr)
-  vecsig <- table(maptab$chr[maptab$sig == 1])
-  vecsig <- vecsig[match(chrun, names(vecsig))]
-  vecsig[is.na(vecsig)] <- 0
-  vecnon <- table(maptab$chr[maptab$sig == 0])
-  vecnon <- vecnon[match(chrun, names(vecnon))]
-  vecnon[is.na(vecnon)] <- 0
-  
-  tab.chi <- cbind(vecsig, vecnon)
-  tab.chi <- tab.chi[rowSums(tab.chi) > 0, ]
-  chi.out <- chisq.test(tab.chi)
-  pvalv[phc] <- chi.out$p.value
-}
-
-sort(pvalv)
-sort(p.adjust(pvalv, meth = "BH"))
-#################
 
 
-############################################
-# Positional analysis
-methc <- c("ph", "proc", "fac")[2]
-featvc <- switch(methc, ph = ph.use, proc = procord, fac = facnam)
-dirc <- "bo"
-if("cl" %in% ls())
-  stopCluster(cl)
-cl <- makeCluster(25)
-registerDoParallel(cl = cl)
-par(mfrow = c(5, 5))
-phsub <- sample(ph.use, 25)
-nperm <- 500
-outl <- foreach(phc = featvc, .verbose = T, .errorhandling = "pass") %dopar% {#for(phc in phsub){#phc <- ph.use[20]#
-  library(topGO)
-  library(GOfuncR)
-  library(org.Mm.eg.db)
-  allresl <- list()
-  for(restype in c("uv.bigeff", "mv.bigeff")){
-    myInterestingGenes <- genfacl[[restype]][[dirc]][[phc]]$hits
-    allPossibleGenes <- genfacl[[restype]][[dirc]][[phc]]$measured
-    geneList.bin <- as.integer(allPossibleGenes %in% myInterestingGenes)
-    maptab <- data.frame(eg = allPossibleGenes, sig = geneList.bin)
-    maptab[, c("loc", "chr")] <- sym2eg[match(allPossibleGenes, sym2eg$gene_id), c("loc", "chr")]
-    maptab <- maptab[order(maptab$chr, maptab$loc), ]
-    maptab$sym <- sym2eg[match(maptab$eg, sym2eg$gene_id), "symbol"]
-    chrun <- unique(maptab$chr)
-    ntot <- nrow(maptab)
-    nsig <- sum(maptab$sig)
-    str(maptab)
-    table(maptab$chr)
-    chisq.test(cbind(table(maptab$chr[maptab$sig == 1]), table(maptab$chr[maptab$sig == 0])))
-    filthalfwidv <- c(3, 5, 7, 10, 15, 20, 30)[2]##[1:3]
-    filtshapel <- list()
-    for(filtwidc in filthalfwidv){
-      filtshapel[[as.character(filtwidc)]] <- dnorm(seq(-3, 3, len = 2 * filtwidc + 1))
-      filtshapel[[as.character(filtwidc)]] <- filtshapel[[as.character(filtwidc)]] / sum(filtshapel[[as.character(filtwidc)]])
-    }
-    
-    
-    
-    overlap.inds <- c()
-    act <- rep(0, ntot)
-    for(filtwidc in filthalfwidv){
-      filtc <- filter(maptab$sig, filter = filtshapel[[as.character(filtwidc)]])
-      # overlap.inds <- outer(match(chrun, maptab$chr), seq(-2 * filtwidc, 2 * filtwidc, by = 1), '+')
-      # overlap.inds <- overlap.inds[overlap.inds >= 1 & overlap.inds < ntot]
-      # filtc[overlap.inds] <- NA
-      act <- pmax(act, filtc, na.rm = T)
-    }
-    permmat <- matrix(NA, ntot, nperm)
-    for(it in 1:nperm){
-      maptab.perm <- maptab
-      maptab.perm$sig <- sample(maptab.perm$sig)
-      permc <- rep(0, ntot)
-      for(filtwidc in filthalfwidv){
-        filtc <- filter(maptab.perm$sig, filter = filtshapel[[as.character(filtwidc)]])
-        # overlap.inds <- outer(match(chrun, maptab.perm$chr), seq(-2 * filtwidc, 2 * filtwidc, by = 1), '+')
-        # overlap.inds <- overlap.inds[overlap.inds >= 1 & overlap.inds < ntot]
-        # filtc[overlap.inds] <- NA
-        permc <- pmax(permc, filtc, na.rm = T)
-      }
-      permmat[, it] <- permc#filter(maptab.perm$sig, filter = rep(1, filtwid))
-    }
-    allresl[[restype]] <-  list(permmat = permmat, act = act)
-  }
-  return(allresl)
-}
-names(outl) <- featvc
-stopCluster(cl)
-rm(cl)
-
-str(outl)
 
 
-relmatl <- list()
-fwerc <- .05
-for(restype in c("uv.bigeff", "mv.bigeff")){
-  relmatl[[restype]] <- sapply(outl, function(x){
-                  thr.up <- quantile(apply(x[[restype]]$permmat, 2, function(v) max(v, na.rm = T)), 1 - fwerc, na.rm = T)
-                return(x[[restype]]$act / thr.up)
-    })
-}
-
-max.rel <- apply(relmatl$mv.bigeff, 2, function(v) max(v, na.rm = T))
-nplph <- 10
-plph <- colnames(relmatl$mv.bigeff)[order(-max.rel)[1:nplph]]
-graphics.off()
-matplot(relmatl$mv.bigeff[, plph], ty = "l")
-abline(h = 1)
-
-phord <- ph.use[order(phmap[match(ph.use, phmap$ph), "procnam"])]
-graphics.off()
-par(mfrow = c(2, 1))
-image(relmatl$mv.bigeff[rowSums(is.na(relmatl$mv.bigeff)) == 0, phord])
-image(relmatl$mv.bigeff[rowSums(is.na(relmatl$mv.bigeff)) == 0, phord] > 1)
-
-############################################################################
-# Combined positional analysis (aggregating the number of hits across phenotypes within gene)
-# ssmat <- (abs(ebl$t) > ebl$th) * sign(ebl$t)
-ssmat <- resl.out$eb$signsig.bigeff[true.use, ]
-maptab <- data.frame(genzyg = rownames(ssmat))
-maptab$impc.id <- sapply(strsplit(maptab$genzyg, spl = "_"), function(v) v[1])
-maptab$zyg <- sapply(strsplit(maptab$genzyg, spl = "_"), function(v) v[2])
-maptab$eg <- genemap2[match(maptab$impc.id, genemap2$genotype_id), "entrez"]
-maptab[, c("loc", "chr")] <- sym2eg[match(maptab$eg, sym2eg$gene_id), c("loc", "chr")]
-maptab <- maptab[order(match(maptab$zyg, c(1, 0, 2))), ]
-genshun <- unique(maptab$eg)
-maptab <- maptab[match(genshun, maptab$eg), ]
-maptab <- maptab[order(maptab$chr, maptab$loc), ]
-chrun <- unique(maptab$chr)
-phord <- ph.use[order(phmap[match(ph.use, phmap$ph), "procnam"])]
-ssmat <- ssmat[maptab$genzyg, phord]
-ntot <- nrow(ssmat)
-agghits <- rowSums(abs(ssmat[, , drop = F]))
-filthalfwidv <- c(5)#10, 15, 20, 30, 50)[1]#[1:3]
-filtshapel <- list()
-for(filtwidc in filthalfwidv){
-  filtshapel[[as.character(filtwidc)]] <- dnorm(seq(-3, 3, len = 2 * filtwidc + 1))
-  filtshapel[[as.character(filtwidc)]] <- filtshapel[[as.character(filtwidc)]] / sum(filtshapel[[as.character(filtwidc)]])
-}
-overlap.inds <- c()
-act <- rep(0, ntot)
-for(filtwidc in filthalfwidv){
-  filtc <- filter(agghits, filter = filtshapel[[as.character(filtwidc)]])
-  overlap.inds <- outer(match(chrun, maptab$chr), seq(-2 * filtwidc, 2 * filtwidc, by = 1), '+')
-  overlap.inds <- overlap.inds[overlap.inds >= 1 & overlap.inds < ntot]
-  filtc[overlap.inds] <- NA
-  act <- pmax(act, filtc, na.rm = T)
-}
-plot(act)
-permmat <- matrix(NA, ntot, nperm)
-nperm <- 500
-
-for(it in 1:nperm){
-  agghits.perm <- sample(agghits)
-  permc <- rep(0, ntot)
-  for(filtwidc in filthalfwidv){
-    filtc <- filter(agghits.perm, filter =  filtshapel[[as.character(filtwidc)]])
-    overlap.inds <- outer(match(chrun, maptab$chr), seq(-2 * filtwidc, 2 * filtwidc, by = 1), '+')
-    overlap.inds <- overlap.inds[overlap.inds >= 1 & overlap.inds < ntot]
-    filtc[overlap.inds] <- NA
-    permc <- pmax(permc, filtc, na.rm = T)
-  }
-  permmat[, it] <- permc#filter(maptab.perm$sig, filter = rep(1, filtwid))
-}
-thr.up <- quantile(apply(permmat, 2, function(v) max(v, na.rm = T)), 1 - fwerc, na.rm = T)
-plot(act / thr.up, ty = "l")
+# 
+# ############################################################
+# # Just checking KEGG for enrichment
+# # keggtab <- toTable(org.Mm.egPATH)
+# keggtab <- toTable(org.Mm.egGO)
+# keggtab2 <- keggtab[keggtab$gene_id %in% genemap2$entrez, ]
+# n.min.at.term <- 1
+# str(keggtab2)
+# idc <- c("go_id", "path_id")[1]
+# # keggtabc <- table(keggtab2$path_id)
+# keggtabc <- table(keggtab2[, idc])
+# keggkeep <- names(keggtabc)[keggtabc >= n.min.at.term]
+# keggtab3 <- keggtab2[keggtab2[, idc] %in% keggkeep, ]
+# keggentun <- unique(keggtab3$gene_id)
+# keggpathun <- unique(keggtab3[, idc])
+# entrez2kegg <- lapply(keggentun, function(x) keggtab3[keggtab3$gene_id == x, "path_id"])
+# names(entrez2kegg) <- keggentun
+# ensun <- unique(names(entrez2kegg))
+# ng <- length(ensun)
+# nk <- length(keggpathun)
+# keggensmat <- matrix(0, ng, nk, dimnames = list(ensun, keggpathun))
+# for(ensc in names(entrez2kegg)){
+#   keggensmat[ensc, which(colnames(keggensmat) %in% entrez2kegg[[ensc]])] <- 1
+# }
+# perml <- list()
+# methc <- "mv.bigeff"
+# pvalmatl <- list()
+# nperm <- 1
+# for(i in 1:(nperm + 1)){
+#   if(i == 1)
+#     keggensmat.use <- keggensmat
+#   if(i > 1)
+#     keggensmat.use[] <- c(keggensmat[sample(1:nrow(keggensmat)), ])
+#     # keggensmat.use[] <- c(keggensmat[, sample(1:ncol(keggensmat))])
+#   pvalmat <- matrix(NA, nph, nk, dimnames = list(ph.use, keggpathun))
+#   for(phc in ph.use){
+#     print(phc)
+#     ensmeasv <- genfacl[[methc]][[dirc]][[phc]]$measured
+#     enshitv.use <- enshitv <- genfacl[[methc]][[dirc]][[phc]]$hits
+#     # if(i == 1)
+#     #   enshitv.use <- enshitv
+#     # if(i > 1)
+#     #   enshitv.use <- sample(ensmeasv, length(enshitv))
+#     n.hit.in.kegg <- colSums(keggensmat.use[rownames(keggensmat.use) %in% enshitv.use, , drop = F])
+#     n.hit.not.in.kegg <- colSums(1 - keggensmat.use[rownames(keggensmat.use) %in% enshitv.use, , drop = F])
+#     n.measnothit.in.kegg <- colSums(keggensmat.use[rownames(keggensmat.use) %in% ensmeasv, , drop = F]) - n.hit.in.kegg
+#     n.measnothit.not.in.kegg <- colSums(1 - keggensmat.use[rownames(keggensmat.use) %in% ensmeasv, , drop = F]) - n.hit.not.in.kegg
+#     for(keggc in keggpathun){
+#       fisher.tab <- matrix(c(n.hit.in.kegg[keggc], n.hit.not.in.kegg[keggc], n.meas.in.kegg[keggc], n.meas.not.in.kegg[keggc]), 2, 2)
+#       fishout <- fisher.test(fisher.tab)
+#       pvalmat[phc, keggc] <- fishout$p.value
+#     }
+#     pvalmatl[[i]] <- pvalmat
+#   }
+# }  
+# 
+# 
+# #############################################
+# # Compare to mousenet network
+# # download.file(url = "https://www.inetbio.org/mousenet/dl_conv.php?f=MouseNetV2&s=0&t=0",
+# #     destfile = paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2.txt"))
+# # download.file(url = "https://www.inetbio.org/mousenet/dl_conv.php?f=MouseNetV2_GS&s=0&t=0",
+# #               destfile = paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_gs.txt"))
+# # download.file(url = "https://www.inetbio.org/mousenet/dl_conv.php?f=MM-LC&s=0&t=0",
+# #               destfile = paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_lc.txt"))
+# # download.file(url = "https://www.inetbio.org/mousenet/dl_conv.php?f=MM-CX&s=0&t=0",
+# #               destfile = paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_cx.txt"))
+# # download.file(url = "https://www.inetbio.org/mousenet/dl_conv.php?f=MM-GN&s=0&t=0",
+# #               destfile = paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_gn.txt"))
+# # download.file(url = "https://www.inetbio.org/mousenet/dl_conv.php?f=MM-PG&s=0&t=0",
+# #               destfile = paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_pg.txt"))
+# mousenet <- read.table(paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2.txt"), sep = "\t")
+# mousenet.gs <- read.table(paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_gs.txt"), sep = "\t")
+# mousenet.lc <- read.table(paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_lc.txt"), sep = "\t")
+# mousenet.cx <- read.table(paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_cx.txt"), sep = "\t")
+# mousenet.gn <- read.table(paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_gn.txt"), sep = "\t")
+# mousenet.pg <- read.table(paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_pg.txt"), sep = "\t")
+# colnames(mousenet) <- colnames(mousenet.gs) <- colnames(mousenet.lc) <- 
+#   colnames(mousenet.cx) <- colnames(mousenet.gn) <- colnames(mousenet.pg) <- c("eg1", "eg2", "lr")
+# 
+# if("cl" %in% ls())
+#   stopCluster(cl)
+# cl <- makeCluster(12)
+# registerDoParallel(cl = cl)
+# dirc <- "bo"
+# methc <- c("ph", "proc", "fac")[1]
+# featvc <- switch(methc, ph = ph.use, proc = procord, fac = facnam)
+# 
+# outl <- foreach(phc = featvc, .verbose = T, .errorhandling = "pass") %dopar% {
+#   # phc = ph.use[1]
+#   pvall <- list()
+#   for(restype in c("uv.bigeff", "mv.bigeff")){
+#     myInterestingGenes <- genfacl[[restype]][[dirc]][[phc]]$hits
+#     allPossibleGenes <- genfacl[[restype]][[dirc]][[phc]]$measured
+#     all(myInterestingGenes %in% allPossibleGenes)
+#     # myInterestingGenes.symbol <- c(na.omit(sym2eg[match(myInterestingGenes, sym2eg$gene_id), "symbol"]))
+#     # allPossibleGenes.symbol <- c(na.omit(sym2eg[match(allPossibleGenes, sym2eg$gene_id), "symbol"]))
+#     # mousenet.sub <- mousenet[(mousenet$eg1 %in% allPossibleGenes | mousenet$eg2 %in% allPossibleGenes), ]
+#     mousenet.use <- list(mousenet.gs, mousenet.lc, mousenet.cx, mousenet.gn, mousenet.pg, mousenet)[[1]]
+#     # if(any(!is.na(mousenet.use$lr))){
+#     #   mousenet.sub <- mousenet.use[which((mousenet.use$eg1 %in% allPossibleGenes & mousenet.use$eg2 %in% allPossibleGenes) & mousenet.use$lr > 0), ]
+#     # } else {
+#     mousenet.sub <- mousenet.use[(mousenet.use$eg1 %in% allPossibleGenes & mousenet.use$eg2 %in% allPossibleGenes), ]
+#     # }
+#     str(mousenet.sub)
+#     npair <- sum(mousenet.sub$eg1 %in% myInterestingGenes & mousenet.sub$eg2 %in% myInterestingGenes)
+#     perm.npair <- c()
+#     for(i in 1:1000){
+#       myInterestingGenes.null <- sample(allPossibleGenes, length(myInterestingGenes))
+#       perm.npair[i] <- sum(mousenet.sub$eg1 %in% myInterestingGenes.null & mousenet.sub$eg2 %in% myInterestingGenes.null)
+#     }
+#     pval.est <- mean(perm.npair >= npair)
+#     pvall[[restype]] <- pval.est
+#   }
+#   return(list(pval = pvall, ph = phc))
+# }
+# stopCluster(cl)
+# if(methc == "ph")
+#   names(outl) <- phmap[match(ph.use, phmap$ph), "nam"]
+# if(methc %in% c("proc", "fac"))
+#   names(outl) <- featvc#phmap[match(ph.use, phmap$ph), "nam"]
+# pvalv.uv <- sapply(outl, function(v) v$pval$uv.bigeff)
+# pvalv.mv <- sapply(outl, function(v) v$pval$mv.bigeff)
+# qvalv.uv <- p.adjust(pvalv.uv, meth = "BH")
+# qvalv.mv <- p.adjust(pvalv.mv, meth = "BH")
+# thc <- .05
+# table(pvalv.uv < thc, pvalv.mv < thc)
+# table(qvalv.uv < thc, qvalv.mv < thc)
+# names(qvalv.mv)[qvalv.mv < thc]
+# 
+# mean(p.adjust(pvalv.mv, meth = "BH") < thc)
+# 
+# mean(pvalv.mv < thc)
+# mean(pvalv.uv < thc)
+# 
+# 
+# 
+# ###################
+# restype <- "mv.bigeff"
+# methc <- c("ph", "proc", "fac")[2]
+# featvc <- switch(methc, ph = ph.use, proc = procord, fac = facnam)
+# pvalv <- c()
+# for(phc in featvc){
+#   myInterestingGenes <- genfacl[[restype]][[dirc]][[phc]]$hits
+#   allPossibleGenes <- genfacl[[restype]][[dirc]][[phc]]$measured
+#   geneList.bin <- as.integer(allPossibleGenes %in% myInterestingGenes)
+#   maptab <- data.frame(eg = allPossibleGenes, sig = geneList.bin)
+#   maptab[, c("loc", "chr")] <- sym2eg[match(allPossibleGenes, sym2eg$gene_id), c("loc", "chr")]
+#   maptab <- maptab[order(maptab$chr, maptab$loc), ]
+#   maptab$sym <- sym2eg[match(maptab$eg, sym2eg$gene_id), "symbol"]
+#   chrun <- unique(maptab$chr)
+#   ntot <- nrow(maptab)
+#   nsig <- sum(maptab$sig)
+#   # str(maptab)
+#   table(maptab$chr)
+#   vecsig <- table(maptab$chr[maptab$sig == 1])
+#   vecsig <- vecsig[match(chrun, names(vecsig))]
+#   vecsig[is.na(vecsig)] <- 0
+#   vecnon <- table(maptab$chr[maptab$sig == 0])
+#   vecnon <- vecnon[match(chrun, names(vecnon))]
+#   vecnon[is.na(vecnon)] <- 0
+#   
+#   tab.chi <- cbind(vecsig, vecnon)
+#   tab.chi <- tab.chi[rowSums(tab.chi) > 0, ]
+#   chi.out <- chisq.test(tab.chi)
+#   pvalv[phc] <- chi.out$p.value
+# }
+# 
+# sort(pvalv)
+# sort(p.adjust(pvalv, meth = "BH"))
+# #################
+# 
+# 
+# ############################################
+# # Positional analysis
+# methc <- c("ph", "proc", "fac")[2]
+# featvc <- switch(methc, ph = ph.use, proc = Data_all$impc$procord, fac = facnam)
+# dirc <- "bo"
+# if("cl" %in% ls())
+#   stopCluster(cl)
+# cl <- makeCluster(25)
+# registerDoParallel(cl = cl)
+# par(mfrow = c(5, 5))
+# phsub <- sample(ph.use, 25)
+# nperm <- 500
+# outl <- foreach(phc = featvc, .verbose = T, .errorhandling = "pass") %dopar% {#for(phc in phsub){#phc <- ph.use[20]#
+#   library(topGO)
+#   library(GOfuncR)
+#   library(org.Mm.eg.db)
+#   allresl <- list()
+#   for(restype in c("uv.bigeff", "mv.bigeff")){
+#     myInterestingGenes <- genfacl[[restype]][[dirc]][[phc]]$hits
+#     allPossibleGenes <- genfacl[[restype]][[dirc]][[phc]]$measured
+#     geneList.bin <- as.integer(allPossibleGenes %in% myInterestingGenes)
+#     maptab <- data.frame(eg = allPossibleGenes, sig = geneList.bin)
+#     maptab[, c("loc", "chr")] <- sym2eg[match(allPossibleGenes, sym2eg$gene_id), c("loc", "chr")]
+#     maptab <- maptab[order(maptab$chr, maptab$loc), ]
+#     maptab$sym <- sym2eg[match(maptab$eg, sym2eg$gene_id), "symbol"]
+#     chrun <- unique(maptab$chr)
+#     ntot <- nrow(maptab)
+#     nsig <- sum(maptab$sig)
+#     str(maptab)
+#     table(maptab$chr)
+#     chisq.test(cbind(table(maptab$chr[maptab$sig == 1]), table(maptab$chr[maptab$sig == 0])))
+#     filthalfwidv <- c(3, 5, 7, 10, 15, 20, 30)[2]##[1:3]
+#     filtshapel <- list()
+#     for(filtwidc in filthalfwidv){
+#       filtshapel[[as.character(filtwidc)]] <- dnorm(seq(-3, 3, len = 2 * filtwidc + 1))
+#       filtshapel[[as.character(filtwidc)]] <- filtshapel[[as.character(filtwidc)]] / sum(filtshapel[[as.character(filtwidc)]])
+#     }
+#     
+#     
+#     
+#     overlap.inds <- c()
+#     act <- rep(0, ntot)
+#     for(filtwidc in filthalfwidv){
+#       filtc <- filter(maptab$sig, filter = filtshapel[[as.character(filtwidc)]])
+#       # overlap.inds <- outer(match(chrun, maptab$chr), seq(-2 * filtwidc, 2 * filtwidc, by = 1), '+')
+#       # overlap.inds <- overlap.inds[overlap.inds >= 1 & overlap.inds < ntot]
+#       # filtc[overlap.inds] <- NA
+#       act <- pmax(act, filtc, na.rm = T)
+#     }
+#     permmat <- matrix(NA, ntot, nperm)
+#     for(it in 1:nperm){
+#       maptab.perm <- maptab
+#       maptab.perm$sig <- sample(maptab.perm$sig)
+#       permc <- rep(0, ntot)
+#       for(filtwidc in filthalfwidv){
+#         filtc <- filter(maptab.perm$sig, filter = filtshapel[[as.character(filtwidc)]])
+#         # overlap.inds <- outer(match(chrun, maptab.perm$chr), seq(-2 * filtwidc, 2 * filtwidc, by = 1), '+')
+#         # overlap.inds <- overlap.inds[overlap.inds >= 1 & overlap.inds < ntot]
+#         # filtc[overlap.inds] <- NA
+#         permc <- pmax(permc, filtc, na.rm = T)
+#       }
+#       permmat[, it] <- permc#filter(maptab.perm$sig, filter = rep(1, filtwid))
+#     }
+#     allresl[[restype]] <-  list(permmat = permmat, act = act)
+#   }
+#   return(allresl)
+# }
+# names(outl) <- featvc
+# stopCluster(cl)
+# rm(cl)
+# 
+# str(outl)
+# 
+# 
+# relmatl <- list()
+# fwerc <- .05
+# for(restype in c("uv.bigeff", "mv.bigeff")){
+#   relmatl[[restype]] <- sapply(outl, function(x){
+#                   thr.up <- quantile(apply(x[[restype]]$permmat, 2, function(v) max(v, na.rm = T)), 1 - fwerc, na.rm = T)
+#                 return(x[[restype]]$act / thr.up)
+#     })
+# }
+# 
+# max.rel <- apply(relmatl$mv.bigeff, 2, function(v) max(v, na.rm = T))
+# nplph <- 10
+# plph <- colnames(relmatl$mv.bigeff)[order(-max.rel)[1:nplph]]
+# graphics.off()
+# matplot(relmatl$mv.bigeff[, plph], ty = "l")
+# abline(h = 1)
+# 
+# phord <- ph.use[order(phmap[match(ph.use, phmap$ph), "procnam"])]
+# graphics.off()
+# par(mfrow = c(2, 1))
+# image(relmatl$mv.bigeff[rowSums(is.na(relmatl$mv.bigeff)) == 0, phord])
+# image(relmatl$mv.bigeff[rowSums(is.na(relmatl$mv.bigeff)) == 0, phord] > 1)
+# 
+# ############################################################################
+# # Combined positional analysis (aggregating the number of hits across phenotypes within gene)
+# # ssmat <- (abs(ebl$t) > ebl$th) * sign(ebl$t)
+# ssmat <- resl.out$eb$signsig.bigeff[true.use, ]
+# maptab <- data.frame(genzyg = rownames(ssmat))
+# maptab$impc.id <- sapply(strsplit(maptab$genzyg, spl = "_"), function(v) v[1])
+# maptab$zyg <- sapply(strsplit(maptab$genzyg, spl = "_"), function(v) v[2])
+# maptab$eg <- genemap2[match(maptab$impc.id, genemap2$genotype_id), "entrez"]
+# maptab[, c("loc", "chr")] <- sym2eg[match(maptab$eg, sym2eg$gene_id), c("loc", "chr")]
+# maptab <- maptab[order(match(maptab$zyg, c(1, 0, 2))), ]
+# genshun <- unique(maptab$eg)
+# maptab <- maptab[match(genshun, maptab$eg), ]
+# maptab <- maptab[order(maptab$chr, maptab$loc), ]
+# chrun <- unique(maptab$chr)
+# phord <- ph.use[order(phmap[match(ph.use, phmap$ph), "procnam"])]
+# ssmat <- ssmat[maptab$genzyg, phord]
+# ntot <- nrow(ssmat)
+# agghits <- rowSums(abs(ssmat[, , drop = F]))
+# filthalfwidv <- c(5)#10, 15, 20, 30, 50)[1]#[1:3]
+# filtshapel <- list()
+# for(filtwidc in filthalfwidv){
+#   filtshapel[[as.character(filtwidc)]] <- dnorm(seq(-3, 3, len = 2 * filtwidc + 1))
+#   filtshapel[[as.character(filtwidc)]] <- filtshapel[[as.character(filtwidc)]] / sum(filtshapel[[as.character(filtwidc)]])
+# }
+# overlap.inds <- c()
+# act <- rep(0, ntot)
+# for(filtwidc in filthalfwidv){
+#   filtc <- filter(agghits, filter = filtshapel[[as.character(filtwidc)]])
+#   overlap.inds <- outer(match(chrun, maptab$chr), seq(-2 * filtwidc, 2 * filtwidc, by = 1), '+')
+#   overlap.inds <- overlap.inds[overlap.inds >= 1 & overlap.inds < ntot]
+#   filtc[overlap.inds] <- NA
+#   act <- pmax(act, filtc, na.rm = T)
+# }
 # plot(act)
-
-
-
-
-
+# permmat <- matrix(NA, ntot, nperm)
+# nperm <- 500
+# 
+# for(it in 1:nperm){
+#   agghits.perm <- sample(agghits)
+#   permc <- rep(0, ntot)
+#   for(filtwidc in filthalfwidv){
+#     filtc <- filter(agghits.perm, filter =  filtshapel[[as.character(filtwidc)]])
+#     overlap.inds <- outer(match(chrun, maptab$chr), seq(-2 * filtwidc, 2 * filtwidc, by = 1), '+')
+#     overlap.inds <- overlap.inds[overlap.inds >= 1 & overlap.inds < ntot]
+#     filtc[overlap.inds] <- NA
+#     permc <- pmax(permc, filtc, na.rm = T)
+#   }
+#   permmat[, it] <- permc#filter(maptab.perm$sig, filter = rep(1, filtwid))
+# }
+# thr.up <- quantile(apply(permmat, 2, function(v) max(v, na.rm = T)), 1 - fwerc, na.rm = T)
+# plot(act / thr.up, ty = "l")
+# # plot(act)
+# 
+# 
+# 
+# 
+# 
