@@ -196,7 +196,7 @@ if (rerun.GO.analysis | !file.exists(go_file_use)) {
 }
 
 
-library(help = "Mus.musculus")
+# library(help = "Mus.musculus")
 genfacl[[restype]][[dirc]][[phc]]$measured
 
 names(outl)
@@ -508,7 +508,7 @@ for(go.plot.type in c("all", "sub")){
     jpeg(filename = paste(control$figure_dir, "/", fnamc, sep = ""), 
          width = 8, height = ifelse(go.plot.type == "all", 12, 6), 
          units = "in", res = 500)
-    par(oma = c(12, 13, 2, 2), mar = c(0, 0, 0, 0))
+    par(oma = c(12, 13, 0, 3), mar = c(0, 0, 0, 0))
     cexlab <- .6
     image(x = 1:ncol(zpl), y = 1:nrow(zpl), z = t(zpl), xlab = "", ylab = "", xaxt = "n", yaxt = "n", col = control$heat_col_palette, zlim = c(-1, 1))
     ncut <- 48
@@ -524,6 +524,7 @@ for(go.plot.type in c("all", "sub")){
     abline(v = 1:ncol(zpl) - .5, col = lincol)
     abline(v = 1:ncol(zpl) - 1.5, col = lincol)
     abline(h = 1:nrow(zpl) - .5, col = lincol)
+    mtext(side = 4, line = 2, text = "Rows labeled (a-h) are shown in Figure 9", cex = .8)
     phmap.sub <- phmap[phmap$nam %in% colnames(zpl), ]
     proctab <- sort(table(phmap.sub$procnam), decreasing = T)
     minperprocname <- 0
@@ -540,7 +541,8 @@ for(go.plot.type in c("all", "sub")){
     if(minperprocname > 0){
       legend(x = -nrow(zpl) * legeps, y = -ncol(zpl) * legeps, xjust = 1, text.col = colv, legend = c(names.leg, "Other"), cex = .6)
     } else {
-      legend(x = -nrow(zpl) * legeps, y = -ncol(zpl) * legeps, xjust = 1, text.col = colv[1:(length(colv) - 1)], legend = names.leg, cex = .6)
+      legend(x = -nrow(zpl) * legeps, y = -ncol(zpl) * legeps, xjust = 1, text.col = colv[1:(length(colv) - 1)], title.col = 1,
+             legend = names.leg, cex = .6, title = "Procedure color-code for phenotypes")
     }
     par(xpd = F)
     dev.off()

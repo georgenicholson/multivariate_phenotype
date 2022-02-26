@@ -1,13 +1,14 @@
-rm(list = ls())
-try({
-  path_to_dir <- "C:/Users/nicho/Documents/bauer_sync/projects/impc_mv_analysis/github_multivariate_phenotype/multivariate_phenotype"
-  setwd(path_to_dir)
-  renv::activate(path_to_dir)
-  renv::status()
-  # renv::snapshot()
-  # renv::restore(path_to_dir)
-})
-getwd()
+
+# rm(list = ls())
+# try({
+#   path_to_dir <- "C:/Users/nicho/Documents/bauer_sync/projects/impc_mv_analysis/github_multivariate_phenotype/multivariate_phenotype"
+#   setwd(path_to_dir)
+#   renv::activate(path_to_dir)
+#   renv::status()
+#   # renv::snapshot()
+#   # renv::restore(path_to_dir)
+# })
+# getwd()
 
 ##########################################
 # Source function files
@@ -71,9 +72,6 @@ if (re_run_fac_post_mn) {
 }
 
 
-
-# saveRDS(object = fac.res.store, file = )
-
 resl.comp.fac <- list()
 suppressWarnings(lmat.norm <- exp(compl[[control$mv_meth_nam_use]]$llmat - apply(compl[[control$mv_meth_nam_use]]$llmat, 1, function(v) max(v, na.rm = T))))
 pmix <- lmat.norm / rowSums(lmat.norm, na.rm = T)
@@ -92,5 +90,3 @@ resl.comp.fac[[control$mv_meth_nam_use]] <- list(mn = fac.wt.mnarr,
                                                  sd = sqrt(fac.wt.varr + fac.wt.mnsqarr - fac.wt.mnarr^2), 
                                                  lfsr = fac.wt.lfsrarr)
 saveRDS(resl.comp.fac, file = control$file_raw_factor_results)
-
-str(fac.res.store, m = 1)
