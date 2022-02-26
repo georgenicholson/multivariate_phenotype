@@ -1,14 +1,14 @@
-rm(list = ls())
-##########################################
-# Source function files
-fns_to_source <- list.files("scripts/functions", full.names = TRUE)
-for (file_curr in fns_to_source) {
-  source(file_curr)
-}
-
-##########################################
-# control contains parameter settings
-control <- get_control_parameters_mv()
+# rm(list = ls())
+# ##########################################
+# # Source function files
+# fns_to_source <- list.files("scripts/functions", full.names = TRUE)
+# for (file_curr in fns_to_source) {
+#   source(file_curr)
+# }
+# 
+# ##########################################
+# # control contains parameter settings
+# control <- get_control_parameters_mv()
 
 ##########################################
 # Download data

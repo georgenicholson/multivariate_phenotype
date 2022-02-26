@@ -1,4 +1,6 @@
+Data <- "impc"
 resimp <- readRDS(file = control$file.resimp)
+
 ####################################################
 #Reference lines numbers for text
 resimp0.imp <- resimp[resimp$line.type == control$control$nam.negcon & resimp$imputed, ]
@@ -100,6 +102,7 @@ file.copy(from = paste(control$figure_dir, "/", fnamc, sep = ""),
 
 #######################################
 #Heatmap of reference lines results
+load(procord.file)
 graphics.off()
 tl.pre <- resll$perm$uv$ref.lines$tl
 thl.pre <- resll$perm$uv$ref.lines$thl
@@ -123,15 +126,15 @@ for(i in 1:length(tl.pre)){
     cenv <- resimp[match(colnames(tl.pre[[i]]), resimp$geno), "cenlong"]
     nlinrepc <- nlinrep[i]
     if(ty == "pre"){
-      plc = (tl.pre[[i]] / thl.pre[[i]])[Data_all$impc$phord, ]
+      plc = (tl.pre[[i]] / thl.pre[[i]])[phord, ]
       par(mar = c(1, big.mar / 2, martop, small.mar / 2))
     }
     if(ty == "pos"){
-      plc = (tl.post[[i]] / thl.post[[i]])[Data_all$impc$phord, ]
+      plc = (tl.post[[i]] / thl.post[[i]])[phord, ]
       par(mar = c(1, small.mar / 2, martop, big.mar / 2))
     }
     plc[which(abs(plc) > zth)] = zth * sign(plc[which(abs(plc) > zth)])
-    image(x = 1:ncol(plc), y = 1:nrow(plc), z = t(plc), col = control$heat_col_palette, zlim = c(-1, 1) * zth, xaxt = "n", yaxt = "n", xlab = "", ylab = "")
+    image(x = 1:ncol(plc), y = 1:nrow(plc), z = t(plc), col = rain, zlim = c(-1, 1) * zth, xaxt = "n", yaxt = "n", xlab = "", ylab = "")
     for(j in 1:nrow(plc)){
       for(k in 1:ncol(plc)){
         if(any(na.omit(abs(plc[j, k])) == 1)){
@@ -140,16 +143,16 @@ for(i in 1:length(tl.pre)){
         }
       }
     }
-    procv <- Data_all$impc$phmap[match(Data_all$impc$phord, Data_all$impc$phmap$ph), "procnam"]
+    procv <- pout[match(phord, pout$ph), "procnam"]
     if(i == 1 & ty == "pre"){
-      procats <- sapply(Data_all$impc$procord, function(procc) mean(which(procv == procc)))
-      axis(side = 2, labels = Data_all$impc$procord, at = procats, las = 2, cex.axis = 1.2)
+      procats <- sapply(procord, function(procc) mean(which(procv == procc)))
+      axis(side = 2, labels = procord, at = procats, las = 2, cex.axis = 1.2)
     }
     if(i == nlin & ty == "pos"){
-      phnam <- Data_all$impc$phmap[match(Data_all$impc$phord, Data_all$impc$phmap$ph), "nam"]
-      axis(side = 4, labels = phnam, at = 1:length(Data_all$impc$phord), las = 2, cex.axis = 1)
+      phnam <- pout[match(phord, pout$ph), "nam"]
+      axis(side = 4, labels = phnam, at = 1:length(phord), las = 2, cex.axis = 1)
     }
-    abline(h = match(Data_all$impc$procord, procv) - .5, lwd = 2)
+    abline(h = match(procord, procv) - .5, lwd = 2)
     polygon(x = rep(c(0, nlinrepc), each = 2) + .5, y = c(0, nrow(plc))[c(1, 2, 2, 1)] + .5, lwd = 2)
     mtext(side = 3, text = ifelse(ty == "pre", "UV", "MV"), cex = .8)
     axis(side = 1, labels = cenv, at = 1:ncol(plc), cex.axis = .9, las = 2)
@@ -165,8 +168,8 @@ for(i in 1:length(tl.pre)){
 par(fig = c(.3, .7, .96, .97), new = T)
 cexax <- 1.1
 par(mar = c(0, 0, 0, 0))
-image(z = as.matrix(1:1000), x = seq(-1, 1, len = 1000), y = 1, col = control$heat_col_palette, xaxt = "n", yaxt = "n", 
-      ylab = "")
+image(z = as.matrix(1:1000), x = seq(-1, 1, len = 1000), y = 1, col = rain, xaxt = "n", yaxt = "n", 
+       ylab = "")
 axis(side = 3, las = 2, cex.axis = cexax, labels = c("< -1.0", -0.5, 0.0, 0.5, "> 1.0"), at = seq(-1, 1, by = .5), las = 0)
 mtext(side = 3, text = expression(italic(tilde(z))), line = 2, cex = cexax, las = 0)
 dev.off()
@@ -223,7 +226,7 @@ for(i in 1:3){
 }
 # mtext(side = 3, text = paste("(", letters[match(namc, namv)], ")", sep = ""), at = -limn, line = 1, cex = 1.3)
 numv <- formatC(c(fdrci[[1]], fdrci[[2]]) * 100, format = "f", digits = 1)
-fdrlab <- paste("Fsr = ", numv[1], "% (", numv[2], "% - ", numv[3], "%)", sep = "")
+fdrlab <- paste("Discordance-implied FDR ", numv[1], "% (", numv[2], "% - ", numv[3], "%)", sep = "")
 mtext(side = 3, text = fdrlab, line = .5, cex = 1)
 dev.off()
 file.copy(from = paste(control$figure_dir, "/", fnamc, sep = ""),
@@ -240,8 +243,8 @@ for(numc in save.num)
 
 
 #het/hom hit rate
-hom.hitrate <- mean(hom.z.sign != 0, na.rm = T)
-het.hitrate <- mean(het.z.sign != 0, na.rm = T)
+hom.hitrate <- mean(hom.z.sign != 0)
+het.hitrate <- mean(het.z.sign != 0)
 save.num1 <- c("hom.hitrate", "het.hitrate")
 for(numc in save.num1)
   write.table(formatC(eval(as.name(numc)) * 100, format = "f", digits = 1), 
@@ -291,7 +294,7 @@ if(extra.plots){
   
   resimp.pos = resimp[resimp$poscon & !resimp$negcon, ]
   print(table(sign(resimp.pos$uv.t) * (abs(resimp.pos$uv.t) > resimp.pos$uv.th.final),
-              sign(resimp.pos$eb.t) * (abs(resimp.pos$eb.t) > resimp.pos$eb.th.final)))
+        sign(resimp.pos$eb.t) * (abs(resimp.pos$eb.t) > resimp.pos$eb.th.final)))
   
   
   
@@ -437,7 +440,7 @@ if(extra.plots){
       if(nrow(refdat) > 0){
         genun = unique(refdat$gene)
         refdat = refdat[order(refdat$gene, refdat$cenlong), ]
-        colun = control$heat_col_palette[floor((1:length(cenun)) / length(cenun) * 1000)]
+        colun = rain[floor((1:length(cenun)) / length(cenun) * 1000)]
         names(colun) = cenun
         colv = colun[refdat$cenlong]
         ylimc = range(c(refdat$mn + 2 * refdat$se, refdat$mn - 2 * refdat$se))
@@ -452,7 +455,7 @@ if(extra.plots){
         par(xpd = NA)
         legend(x = nrow(refdat) + .5, y = mean(ylimc), legend = cenun, col = colun, pch = 19, yjust = .5, xjust = 0)
         par(xpd = F)
-        mtext(outer = T, paste(phc, Data_all$impc$phmap[match(phc, Data_all$impc$phmap$ph), "nam"]), side = 3, line = -1.5)
+        mtext(outer = T, paste(phc, pout[match(phc, pout$ph), "nam"]), side = 3, line = -1.5)
       }
     }
   }

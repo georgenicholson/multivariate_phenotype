@@ -11,9 +11,10 @@ if("--args" %in% arguments){
   for(i in 1:nrow(argnam.in))
     assign(argnam.in$nam[i], eval(call(argnam.in$coersion.fn[i], arguments[grep("--args", arguments) + i])))
 } else {
-  run_type <- c("demo", "main", "benchmark", "test_benchmark")[3]
+  run_type <- c("demo", "main", "benchmark", "test_benchmark")[1]
   scen <- 12
-  subsamseed <- 6
+  if(run_type == "main") scen <- 1
+  subsamseed <- 1
 }
 
 ##########################################
@@ -50,7 +51,9 @@ MVphen_K <- analysis_table$MVphen_K[scen]
 n_subsamples <- analysis_table$n_subsamples[scen]
 XDmeth <- Meth
 
-file_list <- get_file_list(control = control, file_core_name = analysis_table[scen, "file_core_name"], subsamseed = subsamseed)
+file_list <- get_file_list(control = control, 
+                           file_core_name = analysis_table[scen, "file_core_name"], 
+                           subsamseed = subsamseed)
 
 Y_raw <- Data_all[[Data]]$Y_raw
 Y_zeroed <- Data_all[[Data]]$Y_zeroed
@@ -107,37 +110,6 @@ Sigl.em.init <- initialize_Sig_list(control = control,
                                     Y = Y_zeroed[sams_for_model_training, phens_to_use], 
                                     nSig = nSig, 
                                     random_init = grepl("rand", Meth))
-
-# XDmeth <- Meth
-# variables_in_filename_use <- control$variables_in_filename
-# file.base <- paste0(control$methods_comp_dir, "/", 
-#                     paste(paste(variables_in_filename_use, sapply(variables_in_filename_use, get), sep = "_"), collapse = "_"))
-# file.base.XD <- file.base.mash <- file.path(control$methods_comp_dir, 
-#                                             paste(paste(control$variables_in_filename, sapply(control$variables_in_filename, get), sep = "_"), collapse = "_"))
-# 
-# emout.file.namc <- paste0(file.base, "_emout.RDS")
-# res.store.namc <- paste0(file.base, "_res.RDS")
-# resl.store.namc <- paste0(file.base, "_resl.RDS")
-# fac.res.store.namc <- paste0(file.base, "_facres.RDS")
-# loocv.res.store.namc <- paste0(file.base, "_loocv_res.RDS")
-# 
-# get_file_name <- function (control, file_core_name, subsamseed) {
-#   file_core_name_w_seed <- gsub("XXX", subsamseed, file_core_name)
-#   file_list <- list()
-#   file_list$emout.file.namc <- file.path(control$methods_comp_dir, paste0(file_core_name_w_seed, "_emout.RDS"))
-#   file_list$file_list$res.store.namc <- file.path(control$methods_comp_dir, paste0(file_core_name_w_seed, "_res.RDS"))
-#   file_list$resl.store.namc <- file.path(control$methods_comp_dir, paste0(file_core_name_w_seed, "_resl.RDS"))
-#   file_list$fac.res.store.namc <- file.path(control$methods_comp_dir, paste0(file_core_name_w_seed, "_facres.RDS"))
-#   file_list$loocv.res.store.namc <- file.path(control$methods_comp_dir, paste0(file_core_name_w_seed, "_loocv_res.RDS"))
-#   file_list$mash.resl.file.namc <- file.path(control$methods_comp_dir, paste0(file_core_name_w_seed, "_mash_resl.RDS"))
-#   file_list$mash.raw.results.file.namc <- file.path(control$methods_comp_dir, paste0(file_core_name_w_seed, "_mash_raw_results.RDS"))
-#   file_list$XD.output.file.namc <- file.path(control$methods_comp_dir, paste0(file_core_name_w_seed, "_XD_output.RDS"))
-#   file_list$XD.resl.file.namc <- file.path(control$methods_comp_dir, paste0(file_core_name_w_seed, "_XD_resl.RDS"))
-#   file_list
-# }
-
-
-
 
 
 ##############################################
