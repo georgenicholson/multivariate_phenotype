@@ -4,8 +4,8 @@ create_table_of_analyses <- function(control, check_status = T, run_type = c("de
   if(run_type == "demo") {
     runtab <- data.frame(N = 100, P = 10, Data = "impc", 
                           Meth = c("MVphen", "XD", "mash"), 
-                          nSig = 1, 
-                          MVphen_K = 3, 
+                          nSig = c(2, 2, 1), 
+                          MVphen_K = 20, 
                           mem = 2000,
                           n_subsamples = 1,
                           stringsAsFactors = F)

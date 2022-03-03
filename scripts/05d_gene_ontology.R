@@ -662,28 +662,28 @@ cat(tabout, file = paste(control$dropbox_table_dir, "/uvmv_enriched_counts_num_i
 #   }
 # }  
 # 
-# 
+
 # #############################################
 # # Compare to mousenet network
-# # download.file(url = "https://www.inetbio.org/mousenet/dl_conv.php?f=MouseNetV2&s=0&t=0",
-# #     destfile = paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2.txt"))
-# # download.file(url = "https://www.inetbio.org/mousenet/dl_conv.php?f=MouseNetV2_GS&s=0&t=0",
-# #               destfile = paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_gs.txt"))
-# # download.file(url = "https://www.inetbio.org/mousenet/dl_conv.php?f=MM-LC&s=0&t=0",
-# #               destfile = paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_lc.txt"))
-# # download.file(url = "https://www.inetbio.org/mousenet/dl_conv.php?f=MM-CX&s=0&t=0",
-# #               destfile = paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_cx.txt"))
-# # download.file(url = "https://www.inetbio.org/mousenet/dl_conv.php?f=MM-GN&s=0&t=0",
-# #               destfile = paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_gn.txt"))
-# # download.file(url = "https://www.inetbio.org/mousenet/dl_conv.php?f=MM-PG&s=0&t=0",
-# #               destfile = paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_pg.txt"))
+# download.file(url = "https://www.inetbio.org/mousenet/dl_conv.php?f=MouseNetV2&s=0&t=0",
+#     destfile = paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2.txt"))
+# download.file(url = "https://www.inetbio.org/mousenet/dl_conv.php?f=MouseNetV2_GS&s=0&t=0",
+#               destfile = paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_gs.txt"))
+# download.file(url = "https://www.inetbio.org/mousenet/dl_conv.php?f=MM-LC&s=0&t=0",
+#               destfile = paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_lc.txt"))
+# download.file(url = "https://www.inetbio.org/mousenet/dl_conv.php?f=MM-CX&s=0&t=0",
+#               destfile = paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_cx.txt"))
+# download.file(url = "https://www.inetbio.org/mousenet/dl_conv.php?f=MM-GN&s=0&t=0",
+#               destfile = paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_gn.txt"))
+# download.file(url = "https://www.inetbio.org/mousenet/dl_conv.php?f=MM-PG&s=0&t=0",
+#               destfile = paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_pg.txt"))
 # mousenet <- read.table(paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2.txt"), sep = "\t")
 # mousenet.gs <- read.table(paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_gs.txt"), sep = "\t")
 # mousenet.lc <- read.table(paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_lc.txt"), sep = "\t")
 # mousenet.cx <- read.table(paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_cx.txt"), sep = "\t")
 # mousenet.gn <- read.table(paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_gn.txt"), sep = "\t")
 # mousenet.pg <- read.table(paste0(platdir, "/projects/impc_mv_analysis/data_in/mousenet_v2_pg.txt"), sep = "\t")
-# colnames(mousenet) <- colnames(mousenet.gs) <- colnames(mousenet.lc) <- 
+# colnames(mousenet) <- colnames(mousenet.gs) <- colnames(mousenet.lc) <-
 #   colnames(mousenet.cx) <- colnames(mousenet.gn) <- colnames(mousenet.pg) <- c("eg1", "eg2", "lr")
 # 
 # if("cl" %in% ls())

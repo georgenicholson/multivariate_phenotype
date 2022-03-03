@@ -1,27 +1,23 @@
-# data <- "impc"
-# xdir <- ifelse(Sys.info()["sysname"] == "Linux", "/mnt/x", "X:")
-# source(paste0(xdir, "/projects/impc_mv_analysis/R_files/impc_mv_parameters.R"))
-load.raw.data <- F
-if(load.raw.data){
-  rin <- read.csv(file = paste0(xdir, "/projects/impc_mv_analysis/data_in/impc_results_ebi/IMPC_ALL_statistical_results.csv"))
-#   save(rin, file = paste0(processed.data.dir, "/ebi_impc_results_v11.RData"))
-# }
-  
-  load(file = paste0(processed.data.dir, "/ebi_impc_results_v11.RData"))
+file_preproc <- file.path(control$data_dir, "impc", "IMPC_results_preprocessed.RDS")
+import.raw.data <- TRUE
+if(import.raw.data){
+  temp <- tempfile()
+  download.file(url = "https://www.dropbox.com/s/j7a0b3ey855704o/IMPC_ALL_statistical_results.csv.gz?dl=1", temp, mode = "wb")
+  unzipped_file <- file.path(control$data_dir, "impc", "IMPC_ALL_statistical_results.csv")
+  R.utils::decompressFile(temp, destname = unzipped_file, ext = "gz", FUN=gzfile)
+  unlink(temp)
+  rin <- read.csv(file = unzipped_file)
+  Data_all <- readRDS(file = control$Data_all_file)
+  resimp <- readRDS(file = paste0(control$global_res_dir, "/resimp_comb.RDS"))  
   load(file = uv.results.Y.S)
   load(file = file.glob.res)
-  genemap <- read.table(paste0(platdir, "/projects/impc_mv_analysis/data_in/gene_info_impc.tsv"), sep = "\t", header = T)
-  # rin$impc_genotype_id_2 <- genemap[match(rin$marker_symbol, genemap$gene_symbol), "genotype_id"]
-  # table(is.na(rin$impc_genotype_id_2), is.na(rin$impc_genotype_id))
-  # mean(is.na(rin$impc_genotype_id_2) & !is.na(rin$impc_genotype_id))
-  # mean(is.na(rin$impc_genotype_id) & !is.na(rin$impc_genotype_id_2))
-  
-  head(rin$marker_symbol)
-  str(genemap)
-  resimp <- resimp[!resimp$ph %in% facnam & resimp$line.type == "trueMut", ]
+  genemap <- Data_all$impc$genemap
+  cenmap <- Data_all$impc$cenmap
+  resimp <- resimp[!grepl("fac", resimp$ph) & resimp$line.type == "trueMut", ]
   ebi.cenmap <- data.frame(ebinam = c("WTSI", "UC Davis", "TCP", "CCP-IMG", "KMPC", "MARC", "JAX", 
-    "MRC Harwell", "ICS", "HMGU", "RBRC", "BCM"),
-                            mynam = c("Wtsi", "Ucd", "Tcp", "CCP-IMG", "KMPC", "MARC", "J", "H", "Ics", "Gmc", "Rbrc", "Bcm"))
+                                      "MRC Harwell", "ICS", "HMGU", "RBRC", "BCM"),
+                            mynam = c("Wtsi", "Ucd", "Tcp", "CCP-IMG", "KMPC", "MARC", "J", 
+                                      "H", "Ics", "Gmc", "Rbrc", "Bcm"))
   ebi.cenmap$mynum <- cenmap[match(ebi.cenmap$mynam, cenmap$nam), "cen"]
   rin$mycen <- ebi.cenmap[match(rin$phenotyping_center, ebi.cenmap$ebinam), "mynum"]
   genemap$cen <- resimp[match(genemap$genotype_id, resimp$geno.sh), "cen"]
@@ -37,49 +33,34 @@ if(load.raw.data){
   resimp$testid_nocen <- paste(resimp$ph, resimp$geno.sh, resimp$zyg, sep = "_")
   mean(resimp$testid[!resimp$imputed] %in% rin$testid)
   mean(resimp$testid_nocen %in% rin$testid_nocen)
-  # prob.res <- resimp[sample(which(!resimp$testid %in% rin$testid &!resimp$imputed), 100), ]
   prob.res <- resimp[which(!resimp$testid %in% rin$testid &!resimp$imputed), ]
   fields.to.hugh <- c("ph", "geno", "cen", "cenlong", "geno.sh", "zyg")
-  # just.genofields.to.hugh <- c("ph", "geno", "cen", "cenlong", "geno.sh", "zyg")
+  # These are the genes missing or incomplete in EBI data
   geno.not.there <- prob.res[!prob.res$geno.sh %in% rin$geno.sh, fields.to.hugh]
   geno.there.but.missing.params <- prob.res[prob.res$geno.sh %in% rin$geno.sh, fields.to.hugh]
-  # genemap
-  str(geno.not.there)
-  str(geno.there.but.missing.params)
-  str(rin)
-  save(rin, file = file.ebi.impc.results)
+  saveRDS(rin, file = file_preproc)
+  # save(rin, file = file.ebi.impc.results)
   # save(genemap, geno.there.but.missing.params, geno.not.there, 
   #      file = "C:/Users/nicho/Documents/bauer_sync/projects/impc_mv_analysis/data_out/records_george_still_cannot_find_in_ebi_v11.RData")
 }
 
-
-load(file = file.ebi.impc.results)
-load(file = file.glob.res)
+rin <- readRDS(file = file_preproc)
+resimp <- readRDS(file = paste0(control$global_res_dir, "/resimp_comb.RDS"))  
+resimp <- resimp[!grepl("fac", resimp$ph), ]
+mv_signsig_name <- paste0(control$mv_meth_nam_use, ".perm.signsig")
+resimp[which(is.na(resimp[, mv_signsig_name]))[1:10], ]
 resimp[, paste0("ebi.", c("mn", "se", "p"))] <- rin[match(resimp$testid, rin$testid), 
                                                     c("genotype_effect_parameter_estimate", "genotype_effect_stderr_estimate", "p_value")]
 resimp$ebi.t <- resimp$ebi.mn / resimp$ebi.se
 resimp$ebi.signsig <- sign(resimp$ebi.mn) * (resimp$ebi.p < 1e-4)
-
-
-tab.eb.ebi.comp <- table(resimp$eb.perm.signsig, resimp$ebi.signsig)
+tab.eb.ebi.comp <- table(resimp[, mv_signsig_name], resimp$ebi.signsig)
 tab.uv.ebi.comp <- table(resimp$uv.perm.signsig, resimp$ebi.signsig)
-# str(tab.uv.ebi.comp)
-# 
-# table(resimp$line.type)
-# str(resimp)
-# resimp.comp <- resimp[!is.na(resimp$uv.perm.signsig) & !is.na(resimp$eb.perm.signsig) & !is.na(resimp$ebi.signsig), ]
-# ebi.hit.rate.p <- mean(resimp$ebi.signsig != 0, na.rm = T)
-# uv.hit.rate.p <- mean(resimp$uv.perm.signsig != 0, na.rm = T)
-# eb.hit.rate.p <- mean(resimp$eb.perm.signsig[!is.na(resimp$uv.perm.signsig)] != 0, na.rm = T)
-
-prettyNum(tab.eb.ebi.comp, big.mark = ",")
-
-tab.eb.ebi.comp
-
+control$mv_meth_nam_use
 n.eb.ebi.disagree <- tab.eb.ebi.comp["-1", "1"] + tab.eb.ebi.comp["1", "-1"]
 prop.eb.ebi.disagree <- n.eb.ebi.disagree / (n.eb.ebi.disagree + tab.eb.ebi.comp["-1", "-1"] + tab.eb.ebi.comp["1", "1"])
 ebi.hit.rate <- mean(resimp$ebi.signsig != 0, na.rm = T)
-dir.save <- revision.text.numbers
+eb.hit.rate <- mean(resimp[, mv_signsig_name] != 0, na.rm = T)
+dir.save <- control$dropbox_text_numbers_dir
 save.prop <- c("ebi.hit.rate", "prop.eb.ebi.disagree")
 for(numc in save.prop)
   write.table(formatC(100 * eval(as.name(numc)), digits = 1, format = "f"), file = paste(dir.save, "/", numc, ".txt", sep = ""), 
@@ -89,78 +70,38 @@ for(numc in save.num)
   write.table(prettyNum(eval(as.name(numc)), big.mark = ","), file = paste(dir.save, "/", numc, ".txt", sep = ""),
               col.names = F, row.names = F, quote = F)
 
-
-
-save.num <- c("n.sig.eb.non", "n.sig.eb.imp", "n.sig.uv", "n.sig.eb.tot", "n.ko.line.measured", "n.ph.measured")
-for(numc in save.num)
-  write.table(prettyNum(eval(as.name(numc)), big.mark = ","), file = paste(dir.save, "/", numc, ".txt", sep = ""),
-              col.names = F, row.names = F, quote = F)
-# save.num2 <- c("mean.s.measured.phens", "sd.y.measured.phens")
-# for(numc in save.num2)
-#   write.table(formatC(eval(as.name(numc)), format = "f", digits = 2), file = paste(dir.save, "/", numc, ".txt", sep = ""), 
-#               col.names = F, row.names = F, quote = F)
-# 
-# 
-# save.fold <- c("eb.fold.increase.", "imp.fold.increase", "fold.increase")
-# for(numc in save.fold)
-#   write.table(formatC(eval(as.name(numc)), digits = 1, format = "f"), file = paste(dir.save, "/", numc, ".txt", sep = ""), 
-#               col.names = F, row.names = F, quote = F)
 library(xtable)
-# addtorow <- addtocol.mv <- list()
-# addtorow$pos <- addtocol.mv$pos <- list(-1)
-# addtorow$command <- '&\\multicolumn{3}{c}{Existing IMPC call}\\\\'
-
-tabout.uv <- print(xtable(prettyNum(tab.uv.ebi.comp, big.mark = ","), label = "tab:uv_ebi_comparison", 
+tab.uv.ebi.comp[] <- prettyNum(tab.uv.ebi.comp, big.mark = ",")
+tabout.uv <- print(xtable(tab.uv.ebi.comp, label = "tab:uv_ebi_comparison", 
                        caption = "Comparison of signed phenotype hits between our UV model (left) and the existing phenotype calls in the IMPC database (top)"),
                    caption.placement = "top")
-cat(tabout.uv, file = paste(revision.text.numbers, "/uv_ebi_comp_tab.txt", sep = ""))
+cat(tabout.uv, file = paste(dir.save, "/uv_ebi_comp_tab.txt", sep = ""))
+tab.eb.ebi.comp[] <- prettyNum(tab.eb.ebi.comp, big.mark = ",")
 tabout.mv <- print(xtable(tab.eb.ebi.comp, label = "tab:eb_ebi_comparison", 
                           caption = "Comparison of signed phenotype hits between our MV model (left) and the existing phenotype calls in the IMPC database (top)"),
                    caption.placement = "top")
-cat(tabout.mv, file = paste(revision.text.numbers, "/eb_ebi_comp_tab.txt", sep = ""))
+cat(tabout.mv, file = paste(dir.save, "/eb_ebi_comp_tab.txt", sep = ""))
 
 
-tab.uv.eb.comp <- table(resimp$uv.perm.signsig, resimp$eb.perm.signsig)
+tab.uv.eb.comp <- table(resimp$uv.perm.signsig, resimp[, mv_signsig_name])
 
-resimp.disagree <- resimp[which(resimp$eb.perm.signsig != 0 & resimp$ebi.signsig != 0 & resimp$eb.perm.signsig != resimp$ebi.signsig), ]
-resimp.disagree.uvmv <- resimp[which(resimp$eb.perm.signsig != 0 & resimp$uv.perm.signsig != 0 & resimp$eb.perm.signsig != resimp$uv.perm.signsig), ]
-# resimp.all.agree <- resimp[which(resimp$uv.perm.signsig == resimp$ebi.signsig), ]
+resimp.disagree <- resimp[which(resimp[, mv_signsig_name] != 0 & 
+                                  resimp$ebi.signsig != 0 & 
+                                  resimp[, mv_signsig_name] != resimp$ebi.signsig), ]
+resimp.disagree.uvmv <- resimp[which(resimp[, mv_signsig_name] != 0 & 
+                                       resimp$uv.perm.signsig != 0 & 
+                                       resimp[, mv_signsig_name] != resimp$uv.perm.signsig), ]
 table(resimp.all.agree$eb.perm.signsig)
-
-
-resimp.all.agree[resimp.all.agree$ph == "IMPC_ECH_011_001", ]
-
-#resimp.disagree$prior.p.pos <- sapply(resimp.disagree$ph, function(ph) sum(resimp$ebi.signsig[resimp$ph == ph] == 1, na.rm = T) / sum(resimp$ebi.signsig[resimp$ph == ph] != 0, na.rm = T))
-# resimp.disagree$prior.p.pos <- sapply(resimp.disagree$ph, function(ph) sum(resimp$eb.perm.signsig[resimp$ph == ph] == 1, na.rm = T) / sum(resimp$eb.perm.signsig[resimp$ph == ph] != 0, na.rm = T))
-# resimp.disagree$prior.p.pos <- sapply(resimp.disagree$ph, function(ph) sum(resimp$uv.perm.signsig[resimp$ph == ph] == 1, na.rm = T) / sum(resimp$uv.perm.signsig[resimp$ph == ph] != 0, na.rm = T))
-# 
-
 
 resimp.prior <- resimp#.all.agree
 resimp.disagree$prior.p.pos <- sapply(resimp.disagree$ph, function(ph) 
   sum(resimp.prior$ebi.signsig[resimp.prior$ph == ph] == 1 | resimp.prior$uv.perm.signsig[resimp.prior$ph == ph] == 1, na.rm = T) / 
     sum(resimp.prior$ebi.signsig[resimp.prior$ph == ph] != 0 | resimp.prior$uv.perm.signsig[resimp.prior$ph == ph] != 0, na.rm = T))
 
-
-# resimp.disagree.uvmv$prior.p.pos <- sapply(resimp.disagree.uvmv$ph, function(ph) 
-#   sum(resimp.prior$ebi.signsig[resimp.prior$ph == ph] == 1 | resimp.prior$uv.perm.signsig[resimp.prior$ph == ph] == 1, na.rm = T) / 
-#     sum(resimp.prior$ebi.signsig[resimp.prior$ph == ph] != 0 | resimp.prior$uv.perm.signsig[resimp.prior$ph == ph] != 0, na.rm = T))
-
-# resimp.disagree$prior.p.pos <- sapply(resimp.disagree$ph, function(ph) sum(resimp.all.agree$uv.perm.signsig[resimp.all.agree$ph == ph] == 1, na.rm = T) /
-#                                         sum(resimp.all.agree$uv.perm.signsig[resimp.all.agree$ph == ph] != 0, na.rm = T))
-
-p.eb <- resimp.disagree$prior.p.pos^as.numeric(resimp.disagree$eb.perm.signsig == 1) * 
-  (1 - resimp.disagree$prior.p.pos)^as.numeric(resimp.disagree$eb.perm.signsig == -1)
+p.eb <- resimp.disagree$prior.p.pos^as.numeric(resimp.disagree[, mv_signsig_name] == 1) * 
+  (1 - resimp.disagree$prior.p.pos)^as.numeric(resimp.disagree[, mv_signsig_name] == -1)
 p.ebi <- resimp.disagree$prior.p.pos^as.numeric(resimp.disagree$ebi.signsig == 1) * 
   (1 - resimp.disagree$prior.p.pos)^as.numeric(resimp.disagree$ebi.signsig == -1)
-
-
-# p.uv.uvmv <- resimp.disagree.uvmv$prior.p.pos^as.numeric(resimp.disagree.uvmv$uv.perm.signsig == 1) * 
-#   (1 - resimp.disagree.uvmv$prior.p.pos)^as.numeric(resimp.disagree.uvmv$uv.perm.signsig == -1)
-# p.eb.uvmv <- resimp.disagree.uvmv$prior.p.pos^as.numeric(resimp.disagree.uvmv$eb.perm.signsig == 1) * 
-#   (1 - resimp.disagree.uvmv$prior.p.pos)^as.numeric(resimp.disagree.uvmv$eb.perm.signsig == -1)
-
-
 table(p.eb > p.ebi)
 
 plot(p.eb, p.ebi, xlim = c(0, 1))
@@ -168,7 +109,7 @@ abline(v = .5)
 bf.eb.ebi <- prod(p.eb) / prod(p.ebi)
 save.num <- c("bf.eb.ebi")
 for(numc in save.num)
-  write.table(prettyNum(round(eval(as.name(numc)), 0), big.mark = ","), file = paste(dir.save, "/", numc, ".txt", sep = ""),
+  write.table(prettyNum(round(eval(as.name(numc)), 2), big.mark = ","), file = paste(dir.save, "/", numc, ".txt", sep = ""),
               col.names = F, row.names = F, quote = F)
 
 
@@ -178,26 +119,134 @@ for(numc in save.num4)
   write.table(prettyNum(round(eval(as.name(numc)), 4), big.mark = ","), file = paste(dir.save, "/", numc, ".txt", sep = ""),
               col.names = F, row.names = F, quote = F)
 
+install.packages("plotrix")
+
+res_ebi <- resimp[!is.na(resimp$uv.perm.signsig), 
+                  c("ebi.signsig", "uv.perm.signsig", mv_signsig_name)]
+res_missing <- resimp[which(resimp$imputed &
+                              !is.na(resimp[, mv_signsig_name])), mv_signsig_name,
+                      drop = FALSE]
+meths <- c("ebi", "uv", "mv")
+names(res_ebi) <- meths
+n_ebi_tests <- nrow(res_ebi)
+n_missing_mvphen_tests <- nrow(res_missing)
+p_missing <- n_missing_mvphen_tests / (n_ebi_tests + n_missing_mvphen_tests)
+p_measured <- 1 - p_missing
+
+
+methnamv <- c(ebi = "ebi.signsig", uv = "uv.perm.signsig", mv = mv_signsig_name)
+p_pos <- rad_pos <- list()
+for (meth in meths) {
+  # p_pos[[meth]] <- mean(res_ebi[, meth] != 0)
+  p_pos[[meth]] <- mean(!is.na(resimp[, methnamv[meth]]) & resimp[, methnamv[meth]] != 0)
+  rad_pos[[meth]] <- sqrt(p_pos[[meth]] / pi)
+}
+p_miss_and_pos <- mean(res_missing != 0)
+
+
+n_obs <- sum(!resimp$imputed)
+n_miss <- n_tot - n_obs
+n_tot <- nrow(resimp)
+n_ebi_pos <- sum(!is.na(resimp[, methnamv["ebi"]]) & resimp[, methnamv["ebi"]] != 0)
+n_uv_pos <- sum(!is.na(resimp[, methnamv["uv"]]) & resimp[, methnamv["uv"]] != 0)
+n_mv_pos_obs <- sum(!resimp$imputed & resimp[, methnamv["mv"]] != 0)
+n_ebi_pos_mv_neg <- sum(!resimp$imputed & resimp[, methnamv["ebi"]] != 0 & resimp[, methnamv["mv"]] == 0 )
+
+
+n_ebi_pos_mv_pos <- sum(na.omit(!resimp$imputed & resimp[, methnamv["ebi"]] != 0 & resimp[, methnamv["mv"]] != 0 ))
+n_uv_pos_mv_pos <- sum(na.omit(!resimp$imputed & resimp[, methnamv["uv"]] != 0 & resimp[, methnamv["mv"]] != 0 ))
+n_uv_pos_ebi_pos <- sum(na.omit(!resimp$imputed & resimp[, methnamv["uv"]] != 0 & resimp[, methnamv["ebi"]] != 0 ))
+
+p23 <- n_ebi_pos_mv_pos / n_tot
+p12 <- n_uv_pos_ebi_pos / n_tot
+p13 <- n_uv_pos_mv_pos / n_tot
+p1 <- n_uv_pos / n_tot
+p2 <- n_ebi_pos / n_tot
+p3 <- n_mv_pos_obs / n_tot
+r1 <- sqrt(n_uv_pos / n_tot / pi)
+r2 <- sqrt(n_ebi_pos / n_tot / pi)
+r3 <- sqrt(n_mv_pos_obs / n_tot / pi)
+d = .02
+area <- function (r1, r2, d) { 
+  l = sqrt(((r1 + r2)^2 - d^2) * (d^2 - (r1 - r2)^2)) / d
+  alp <- asin(l / 2 / r1)
+  bet <- asin(l / 2 / r2)
+  area <- (alp - sin(alp) * cos(alp)) * r1^2 + (bet - sin(bet) * cos(bet)) * r2^2
+  return(area)
+}
+
+area <- function (r, R, d) { 
+  area <- r^2 * acos((d^2 + r^2 - R^2) / (2 * d * r)) + 
+          R^2 * acos((d^2 + R^2 - r^2) / (2 * d * R)) -
+          .5 * sqrt((-d + r + R) * (d + r - R) * (d - r + R) * (d + r + R))  
+  return(area)
+}
+
+r1
+r2
+d12seq <- seq(abs(r1 - r2), r1 + r2, by = .0001)
+d12 <- d12seq[which.min(abs(area(r1, r2, d12seq) - p12))]
+d13seq <- seq(abs(r1 - r3), r1 + r3, by = .0001)
+d13 <- d13seq[which.min(abs(area(r1, r3, d13seq) - p13))]
+d23seq <- seq(abs(r2 - r3), r2 + r3, by = .0001)
+d23 <- d23seq[which.min(abs(area(r2, r3, d23seq) - p23))]
+
+plot(abs(area(r2, r3, d23seq) - p23))
+rr1 <- 1  
+rr2 <- 2  
+dseq <- seq(abs(rr1 - rr2), rr1 + rr2, by = .0001)
+plot(dseq, area(rr1, rr2, dseq))
+
+x3 <- p_obs / 2
+y3 <- .5
+x1 <- x3 + d13
+y1 <- y3
+cd <- d13
+ad <- d12
+bd <- d23                                                       
+x2 <- x3 + (ad^2 - bd^2 - cd^2) / (-2 * cd)
+y2 <- y3 + sqrt(bd^2 - (x2 - x3)^2)
+n_mv_pos_miss <- sum(resimp$imputed & resimp[, methnamv["mv"]] != 0)
+p_miss <- n_miss / n_tot
+p_obs <- n_obs / n_tot
+table(resimp[, methnamv["ebi"]], resimp[, methnamv["mv"]])
+
+pdf(file = paste0(control$dropbox_figure_dir, "/venn_diagrams.pdf"), 12, 8.5)
+par(oma = c(1, 1, 1, 1), mar = c(0, 0, 6, 20))
+col_use <- rgb(red = c(1, 0.2, 0), green = c(0, 0.2, 0), blue = c(0, 0.2, 1), alpha = .45)
+# viridis::rocket(n = 3, alpha = .6)#[sample(1:3, 3)]
+#col_use <- viridis::turbo(n = 3, alpha = .5)#[sample(1:3, 3)]
+names(col_use) <- meths
+plot(0, xlim = c(0, 1), ylim = c(0, 1), xaxt = "n", yaxt = "n", xlab = "", ylab = "", ty = "l", xaxs = "i", yaxs = "i")
+polygon(x = c(0, rep(p_obs, 2), 0, 0), y = c(0, 0, 1, 1, 0), col = "white", border = 1)
+plotrix::draw.circle(x = x3, y = y3, radius = r3, nv = 10000, border = NA, 
+                     col = col_use["mv"], lty = 1, density = NULL, angle = 45, lwd = 1)
+plotrix::draw.circle(x = x1, y = y1, radius = r1, nv = 10000, border = NA, 
+                     col = col_use["uv"], lty = 1, density = NULL, angle = 45, lwd = 1)
+plotrix::draw.circle(x = x2, y = y2, radius = r2, nv = 10000, border = NA, 
+                     col = col_use["ebi"], lty = 1, density = NULL, angle = 45, lwd = 1)
+plotrix::draw.circle(x = p_obs + p_miss / 2, y = .5, radius = sqrt(n_mv_pos_miss / n_tot / pi), nv = 10000, border = NA, 
+                     col = col_use["mv"], lty = 1, density = NULL, angle = 45, lwd = 1)
+cexax <- 1.4
+mtext(side = 3, text = c("Observed data", "Missing data"), at = c(p_obs / 2, p_obs + p_miss / 2), line = 1, cex = cexax)
+par(xpd = NA)
+# legend(x = .5, y = 1.09, legend = c("IMPC database", "UV method", "MV method"), col = col_use, pch = 19, pt.cex = 2, xjust = .5)
+legend(x = 1.03, y = .75, legend = c("IMPC database", "UV method", "MV method"), col = col_use,
+        pch = 19, pt.cex = 2, xjust = 0, cex = cexax)
+par(xpd = F)
+dev.off()
+
+# plotrix::draw.circle(x = p_obs / 2, y = .5, radius = sqrt(n_uv_pos / n_tot / pi), nv = 10000, border = NULL, 
+#                      col = col_use["uv"], lty = 1, density = NULL, angle = 45, lwd = 1)
+for (meth in c("mv", "ebi", "uv")) {
+  plotrix::draw.circle(x = p_obs / 2, y = .5, radius = rad_pos[[meth]], nv = 10000, border = col_use[meth], 
+                     col = col_use[meth], lty = 1, density = NULL, angle = 45, lwd = 1)
+  plotrix::draw.circle(x = p_obs + p_miss / 2, y = .5, radius = rad_pos[[meth]], nv = 10000, border = col_use[meth], 
+                       col = col_use[meth], lty = 1, density = NULL, angle = 45, lwd = 1)
+}
 
 
 
-mean(is.na(resimp$ebi.signsig))
-
-
-fdr.est.tab(tab.eb.ebi.comp)
-
-
-
-table(resimp$eb.perm.signsig, resimp$ebi.signsig)
-tab.imp <- table(resimp$eb.perm.signsig[is.na(resimp$uv.perm.signsig)], resimp$ebi.signsig[is.na(resimp$uv.perm.signsig)])
-fdr.est.tab(tab.imp)
-
-table(resimp$eb.perm.signsig[is.na(resimp$uv.perm.signsig)], resimp$ebi.signsig[is.na(resimp$uv.perm.signsig)])
-table(resimp$uv.perm.signsig[!is.na(resimp$uv.perm.signsig) & !is.na(resimp$ebi.signsig)])
-table(resimp$ebi.signsig[!is.na(resimp$uv.perm.signsig) & !is.na(resimp$ebi.signsig)])
-
-
-# resimp[resimp$]
 
 
 
@@ -206,82 +255,56 @@ table(resimp$ebi.signsig[!is.na(resimp$uv.perm.signsig) & !is.na(resimp$ebi.sign
 
 
 
-annos <- rin
-unique(annos[annos$colony_id == genemap[genemap$genotype_id == geno.not.there[1,"geno.sh"],"genotype"],"marker_accession_id"])
-mean(resimp$geno %in% rin$geno)
-length(unique(resimp$geno[!resimp$geno %in% rin$geno]))
-str(rin$geno)
-str(geno.not.there)
-str(geno.there.but.missing.params)
-table(geno.not.there$ph)
-table(geno.there.but.missing.params$ph)
-npl <- 10000
-plot(resimp$ebi.t[1:npl], resimp$uv.t[1:npl])
 
 
 
 
-tab.eb.ebi.imp <- table(resimp$eb.perm.signsig[resimp$imputed], resimp$ebi.signsig[resimp$imputed])
-tab.eb.ebi.non <- table(resimp$eb.perm.signsig[!resimp$imputed], resimp$ebi.signsig[!resimp$imputed])
-tab.eb.ebi.imp
-fdr.est.tab(tab.eb.ebi.imp)
-tab.eb.ebi.non
-fdr.est.tab(tab.eb.ebi.non)
 
 
 
-table(resimp$eb.perm.signsig, resimp$uv.perm.signsig)
-
-rsub <- rin[rin$parameter_stable_id %in% ph.use & rin$impc_genotype_id %in% resimp$geno.sh, ]
-
-mean(resimp$geno.sh %in% rin$impc_genotype_id)
-unique(resimp$ph[!resimp$ph %in% rin$parameter_stable_id])
-mean(resimp$cen %in% rin$mycen)
-table(rin$zyg)
-mean(resimp$testid %in% rin$testid)
-table(resimp[!resimp$testid %in% rin$testid, "cen"])
-head(rin$testid)
-head(resimp$testid)
-
-mean(resimp$geno.sh %in% rin$impc_genotype_id)
-mean(resimp$cen %in% rin$mycen)
 
 
-dput(unique(rsub$phenotyping_center))
 
 
-    
-table(rsub$phenotyping_center)
-cenmap
-
-resimp$ebi.mn[1:100]
 
 
-plot()
-table(rsub$phenotyping_center_id)
-cenmap
 
-sort(table(rsub$parameter_stable_id[rsub$interaction_significant == "true"]))
 
-colnames(rsub)[grep("sig", colnames(rsub))]
-str(rsub)
-rsub$
-str(resimp)
-mean(resimp$geno.sh %in% rin$mutant_biological_model_id)
-str(rin)
 
-mean(!is.na(rin$impc_genotype_id))
-ph.use
-mean(genemap$gene_id %in% rin$marker_accession_id)
-table(table(rsub$allele_accession_id))
-namsort <- sort(colnames(rin))
-str(rin[, namsort])
 
-rin$z
-range(rin$mutant_biological_model_id)
-range(as.numeric(resimp$geno.sh))
-str(genemap)
 
-for(j in 1:ncol(rin))
-  print(ph.use[1] %in% rin[, j])
-#
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

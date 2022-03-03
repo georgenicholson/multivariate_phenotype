@@ -41,8 +41,9 @@ re_run_fac_post_mn <- TRUE
 if (re_run_fac_post_mn) {
   ncore <- min(20, n_subsamples)
   require(doParallel)
-  if(!"clust" %in% ls())
+  if(!"clust" %in% ls()) {
     clust <- parallel::makeCluster(rep("localhost", ncore), type = "SOCK")
+  }
   doParallel::registerDoParallel(clust)
   fac.res.store <- foreach::foreach(subsamseed = 1:n_subsamples, .verbose = T) %dopar% {
     sams.for.testing <- objl[[control$mv_meth_nam_use]][[subsamseed]]$saml$sams.for.testing

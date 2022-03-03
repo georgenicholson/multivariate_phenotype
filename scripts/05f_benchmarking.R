@@ -19,6 +19,8 @@ true.ses <- apply(llmean.splitmat.true, 2, function(v) sd(v, na.rm = T) / sqrt(l
 null.mns <- colMeans(llmean.splitmat.null, na.rm = T)
 null.ses <- apply(llmean.splitmat.null, 2, function(v) sd(v, na.rm = T) / sqrt(length(v)))
 
+str(objl$impc_XD_nSig_2$S)
+
 err.data.type <- "comb"#for(err.data.type in c("comb", "single")){
 # load(file = paste0(global.res.dir, "/restabl_", err.data.type, ".RData"))  
 formatfn <- function(v)  formatC(v * 100, digits = 1, format = "f")

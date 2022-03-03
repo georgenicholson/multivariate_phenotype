@@ -1,11 +1,11 @@
-rm(list = ls())
-try({
-  # path_to_dir <- "C:/Users/nicho/Documents/GitHub/multivariate_phenotype"
-  # setwd(path_to_dir)
-  # renv::activate(path_to_dir)
-  # renv::restore(path_to_dir)
-})
-getwd()
+# rm(list = ls())
+# try({
+#   # path_to_dir <- "C:/Users/nicho/Documents/GitHub/multivariate_phenotype"
+#   # setwd(path_to_dir)
+#   # renv::activate(path_to_dir)
+#   # renv::restore(path_to_dir)
+# })
+# getwd()
 
 Data <- "impc"
 
@@ -37,4 +37,4 @@ restabl <- readRDS(file = file.path(control$global_res_dir, paste0("restabl_comb
 # source("scripts/05a_heatmap_of_hits.R")
 # source("scripts/05b_power_comparisons.R")
 # source("scripts/05c_reference_lines.R")
-source("scripts/05d_gene_ontology.R")
+# source("scripts/05d_gene_ontology.R")

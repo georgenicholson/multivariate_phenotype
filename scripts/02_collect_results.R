@@ -7,7 +7,6 @@
 # })
 # getwd()
 
-run_type <- c("demo", "main", "benchmark", "test_benchmark")[2]
 
 ##########################################
 # Source function files
@@ -24,15 +23,17 @@ control <- get_control_parameters_mv()
 # Load data
 Data_all <- readRDS(control$Data_all_file)
 
+
 ##########################################
 # Get table of analyses
-analysis_table <- create_table_of_analyses(control = control, check_status = T, run_type = run_type)
+# run_type <- c("demo", "main", "benchmark", "test_benchmark")[3]
+analysis_table <- create_table_of_analyses(control = control, check_status = T, run_type = "benchmark")
 
 resl.comp <- compl <- Sigll <- Ksigl <- pimatl <- Sighatl <- Rl <- omegaseql <- samll <- objl <- list()
 resl.comp$uv <- list(mn = Data_all$impc$Y_raw[Data_all$impc$sam_names, Data_all$impc$meas_names], 
                      sd = Data_all$impc$S_raw[Data_all$impc$sam_names, Data_all$impc$meas_names])
 
-for(scen in 1:nrow(analysis_table)){
+scen=24#for(scen in 1:nrow(analysis_table)){
   for (var_name in c("N", "P", "Data", "Meth", "nSig", "MVphen_K", "n_subsamples", "file_core_name")) {
     assign(var_name, analysis_table[scen, var_name])
   }
@@ -134,7 +135,8 @@ for(scen in 1:nrow(analysis_table)){
       }
     }
     if (!is.null(res.store)) {
-      Sigll[[namc]][[subsamseed]] <- objl[[namc]][[subsamseed]]$Sigl <- lapply(res.store$Sigl, function(M) M[match(meas_names, rownames(M)), match(meas_names, colnames(M))])
+      Sigll[[namc]][[subsamseed]] <- objl[[namc]][[subsamseed]]$Sigl <- 
+        lapply(res.store$Sigl, function(M) M[match(meas_names, rownames(M)), match(meas_names, colnames(M))])
       Rl[[namc]][[subsamseed]] <- objl[[namc]][[subsamseed]]$R <- res.store$R[match(meas_names, rownames(res.store$R)), match(meas_names, colnames(res.store$R))]
       pimatl[[namc]][[subsamseed]] <- objl[[namc]][[subsamseed]]$pimat <- res.store$pimat
       omegaseql[[namc]][[subsamseed]] <- objl[[namc]][[subsamseed]]$omegaseq <- res.store$omegaseq
@@ -151,6 +153,8 @@ for(scen in 1:nrow(analysis_table)){
       compl[[namc]]$llmat.zero[match(names(resl.store$zero$loglikv), sam_names), subsamseed] <- resl.store$zero$loglikv
     }
   }
+  
+  all(Sigll[[namc]][[subsamseed]][[1]] == Sigll[[namc]][[subsamseed]][[2]])
   
   ########################################################
   # Calculate combined Sig and R
