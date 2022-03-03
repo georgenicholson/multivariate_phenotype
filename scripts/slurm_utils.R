@@ -1,7 +1,7 @@
 rm(list = ls())
 ##########################################
 # Super parameters
-run_type <- c("demo", "main", "benchmark", "test_benchmark")[1]
+run_type <- c("demo", "main", "benchmark", "test_benchmark")[3]
 
 ##########################################
 # Source function files
@@ -32,12 +32,12 @@ for(dirc in c(control$output_dir, control$methods_comp_dir, control$global_res_d
 # Get table of analyses
 analysis_table <- create_table_of_analyses(control = control, check_status = T, run_type = run_type)
 # analysis_table <- analysis_table[order(analysis_table$Data, decreasing = TRUE), ]
-scen_to_run <- 1:nrow(analysis_table)
+scen_to_run <- which(analysis_table$nSig == 2)# 1:nrow(analysis_table)
 # network_path_to_MVphen_git_repo <- "/mnt/x/projects/impc_mv_analysis/github_multivariate_phenotype/multivariate_phenotype"
 network_path_to_MVphen_git_repo <- "/mnt/c/Users/nicho/Dropbox/GitHub_Dropbox/multivariate_phenotype"
 # network_path_to_MVphen_git_repo <- "//TW/Users/nicho/Documents/bauer_sync/projects/impc_mv_analysis/github_multivariate_phenotype/multivariate_phenotype"
 dir.create(".job", showWarnings = FALSE)
-partc <- c("debug", "debug11", "debug6", "debug8", "debug4")[5]
+partc <- c("debug", "debug11", "debug6", "debug8", "debug4")[2]
 file.copy(from = "scripts/01_model_fitting_wrapper.R",
           to = "scripts/01_model_fitting_wrapper_temp.R", overwrite = T)
 for (scen in scen_to_run) {#scen <- 1#
@@ -72,7 +72,7 @@ for (scen in scen_to_run) {#scen <- 1#
 
 
 
-# system(paste0("wsl cat ", "/mnt/s/job_output_files/", file_name_curr, ".err"))
+system(paste0("wsl cat ", "/mnt/s/job_output_files/", file_name_curr, ".err"))
 # system(paste0("wsl cat ", "/mnt/s/job_output_files/", file_name_curr, ".out"))
 # Data_impc_Meth_mash_N_100_P_10_subsamseed_1_nSig_1_MVphen_K_3_XDmeth_mash.err
 # sinfo

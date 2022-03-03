@@ -12,7 +12,7 @@ if("--args" %in% arguments){
     assign(argnam.in$nam[i], eval(call(argnam.in$coersion.fn[i], arguments[grep("--args", arguments) + i])))
 } else {
   run_type <- c("demo", "main", "benchmark", "test_benchmark")[1]
-  scen <- 12
+  scen <- 2
   if(run_type == "main") scen <- 1
   subsamseed <- 1
 }

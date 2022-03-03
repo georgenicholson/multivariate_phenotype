@@ -1,5 +1,4 @@
-
-initialize_Sig_list <- function (control, Y = Y_zeroed[sams_for_model_training, phens_to_use], nSig, random_init = F) {
+initialize_Sig_list <- function (control, Y, nSig, random_init = F) {
   sams_for_model_training <- rownames(Y)
   phens_to_use <- colnames(Y)
   if (random_init) {
@@ -20,7 +19,7 @@ initialize_Sig_list <- function (control, Y = Y_zeroed[sams_for_model_training, 
     Sigl.em.init <- list()
     for (j in 1:nSig) {
       sams.in <- names(cluster.membership)[which(cluster.membership == j)]
-      Sig.init <- cov(Y, use = "p", meth = "p")
+      Sig.init <- cov(Y[sams.in, ], use = "p", meth = "p")
       Sig.init[is.na(Sig.init)] <- 0
       diag(Sig.init)[is.na(diag(Sig.init))] <- 1
       if(qr(Sig.init)$rank < P)
@@ -30,6 +29,5 @@ initialize_Sig_list <- function (control, Y = Y_zeroed[sams_for_model_training, 
       Sigl.em.init[[j]] <- Sig.init
     }
   }
-  
   Sigl.em.init
 }

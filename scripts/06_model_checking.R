@@ -1,35 +1,17 @@
-# xdir <- ifelse(Sys.info()["sysname"] == "Linux", "/mnt/x", "X:")
-# source(paste0(xdir, "/projects/impc_mv_analysis/R_files/impc_mv_parameters.R"))
-# 
-# 
-# 
-# load(file = uv.results.Y.S)
-# load(file = file.ebi.impc.results)
-# load(file = file.glob.res)
-# 
-# 
-# 
-# 
-# 
-# 
-
-
-
-
 
 linemap.use <- Data_all$impc$linemap
 linemap.use$line.type <- ifelse(linemap$line.type == "trueMut", "trueMutTes", "negConTes")
 linemap.use <- linemap.use[linemap.use$geno %in% rownames(resl.comp$eb$mn), ]
 
-objl[[control$mv_meth_nam_use]][[1]]$Sigl[[1]]
-control$n_subsamples_main
+# objl[[control$mv_meth_nam_use]][[1]]$Sigl[[1]]
 
-Sig.comb <- resl.comp$impc_eb_1$Sig.comb
-str(Sigll, m = 1)
+# Sig.comb <- resl.comp$impc_eb_1$Sig.comb
+# str(Sigll, m = 1)
+
 #####################################################################
-# Calculate KL divergence between split models and combined model
+# Calculate KL divergence between split models and combined model for Factor Sensitivity Analysis
 kl1 <- kl2 <- c()
-Sig.comb <- resl[[control$mv_meth_nam_use]]$Sig.comb
+Sig.comb <- resl.comp[[control$mv_meth_nam_use]]$Sig.comb
 P <- control$default_parameters$impc$P
 for(seed in 1:control$n_subsamples_main){
   Sig_for_curr_data_split <- objl[[control$mv_meth_nam_use]][[seed]]$Sigl[[1]]
@@ -42,8 +24,69 @@ for(seed in 1:control$n_subsamples_main){
 }
 
 
+
+names(resl.comp)
 plot(kl1, kl2)
-seed.largest.kl <- which.max(kl1 + kl2)
+
+
+
+seed.largest.kl <- which.min(kl1 + kl2)
+Sig_main <- Sig.comb
+Sig_compare <- objl[[control$mv_meth_nam_use]][[seed.largest.kl]]$Sigl[[1]]
+Sig_corr_compare <- t(Sig_compare / sqrt(diag(Sig_compare))) / sqrt(diag(Sig_compare))
+eigc_compare <- eigen(Sig_corr_compare)
+Sig_corr_main <- t(Sig_main / sqrt(diag(Sig_main))) / sqrt(diag(Sig_main))
+eigc_main <- eigen(Sig_corr_main)
+loadings_main <- varimax(eigc_main$vectors[, 1:control$nfac])$loadings
+loadings_compare <- varimax(eigc_compare$vectors[, 1:control$nfac])$loadings
+loadings_main <- sweep(loadings_main, 2, apply(loadings_main, 2, function(v) v[which.max(abs(v))]), "/")
+loadings_compare <- sweep(loadings_compare, 2, apply(loadings_compare, 2, function(v) v[which.max(abs(v))]), "/")
+# apply(loadings_main, 2, max)
+
+t(loadings_main) %*% loadings_main
+rownames(loadings_compare) <- rownames(Sig_corr_compare)
+rownames(loadings_main) <- rownames(Sig_corr_main)
+loadings_compare <- loadings_compare[rownames(loadings_main), ]
+# reorder compare loadings to match main
+prox_mat <- abs(t(loadings_main) %*% loadings_compare)
+map_to <- rep(0, control$nfac)
+# for (j in rank(-apply(prox_mat, 2, max), )) {
+for (j in 1:control$nfac) {
+    map_to[j] <- which.max(ifelse(1:control$nfac %in% map_to, -1, abs(t(loadings_main) %*% loadings_compare[, j])))
+    # map_to[j] <- which.max(abs(t(loadings_main) %*% loadings_compare[, j]))
+    # map_to[j] <- which.max(abs(t(loadings_main) %*% loadings_compare[, j]))
+}
+
+j=1
+abs(t(loadings_main) %*% loadings_compare[, j])
+loadings_compare[, map_to] <- loadings_compare
+loadings_compare <- sweep(loadings_compare, 2, sign(colMeans(loadings_main * loadings_compare)), "*")
+# loadings_compare <- loadings_compare[, apply(abs(t(loadings_main) %*% loadings_compare), 1, which.max)]
+par(mfrow = c(1, 2))
+image(t(loadings_main), zlim = c(-1, 1), col = rain)
+image(t(loadings_compare), zlim = c(-1, 1))
+# image(t(resl.comp[[control$mv_meth_nam_use]]$facs.varimax[rownames(loadings_main), ]))
+
+image(abs(t(loadings_main) %*% loadings_compare))
+plot(resl.comp[[control$mv_meth_nam_use]]$Sigcor.comb, Sig_corr_main)
+
+plot(resl.comp[[control$mv_meth_nam_use]]$facs.varimax[rownames(loadings_main), 4],
+      loadings_main[, 4])
+
+dimnames(loadings_main)
+
+par(mfrow = c(1, 2))
+image(Sig_main)
+image(Sig_compare)
+
+
+str(fac.res.store)
+head(fac.res.store[[seed.largest.kl]]$loadings)
+head(resl.comp[[control$mv_meth_nam_use]]$facs.varimax)
+
+head(fac.res.store[[1]]$loadings)
+head(fac.res.store[[2]]$loadings)
+
 
 #####################################################
 # Checking concordance across splits when using LFSR as error rate control
