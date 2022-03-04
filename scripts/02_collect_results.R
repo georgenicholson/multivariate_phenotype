@@ -33,7 +33,7 @@ resl.comp <- compl <- Sigll <- Ksigl <- pimatl <- Sighatl <- Rl <- omegaseql <- 
 resl.comp$uv <- list(mn = Data_all$impc$Y_raw[Data_all$impc$sam_names, Data_all$impc$meas_names], 
                      sd = Data_all$impc$S_raw[Data_all$impc$sam_names, Data_all$impc$meas_names])
 
-scen=24#for(scen in 1:nrow(analysis_table)){
+for(scen in 1:nrow(analysis_table)){
   for (var_name in c("N", "P", "Data", "Meth", "nSig", "MVphen_K", "n_subsamples", "file_core_name")) {
     assign(var_name, analysis_table[scen, var_name])
   }

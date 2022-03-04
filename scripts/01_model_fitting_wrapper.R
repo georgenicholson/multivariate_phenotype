@@ -1,8 +1,10 @@
 # rm(list = ls())
-
+#
 # path_to_dir <- "C:/Users/nicho/Documents/bauer_sync/projects/impc_mv_analysis/github_multivariate_phenotype/multivariate_phenotype"
-# renv::activate(path_to_dir)
-# renv::restore(path_to_dir)
+# renv::restore(packages = "renv")
+# renv::activate()
+# renv::restore()
+# renv::restore(packages = "renv")
 arguments <- commandArgs()
 if("--args" %in% arguments){
   argnam.in <- data.frame(nam = c("run_type", "scen", "subsamseed"), 
@@ -12,11 +14,11 @@ if("--args" %in% arguments){
     assign(argnam.in$nam[i], eval(call(argnam.in$coersion.fn[i], arguments[grep("--args", arguments) + i])))
 } else {
   run_type <- c("demo", "main", "benchmark", "test_benchmark")[1]
-  scen <- 2
+  scen <- 1
   if(run_type == "main") scen <- 1
   subsamseed <- 1
 }
-
+print(Sys.info())
 ##########################################
 # Source function files
 fns_to_source <- list.files("scripts/functions", full.names = TRUE)
@@ -24,14 +26,25 @@ for (file_curr in fns_to_source) {
   source(file_curr)
 }
 
+
 ##########################################
 # control to contain parameters
 control <- get_control_parameters_mv()
 
 ##########################################
 # Create directory structure
-for(dirc in c(control$output_dir, control$methods_comp_dir, control$global_res_dir, control$data_dir, control$train_test_samples_dir))
-  dir.create(dirc, showWarnings = F)
+for (dirc in c(control$output_dir, control$methods_comp_dir, control$global_res_dir, control$data_dir, control$train_test_samples_dir)) {
+  dir.create(dirc, recursive = TRUE)
+}
+print(getwd())
+print(paste("data dir exits:", dir.exists("data")))
+
+##########################################
+# Download data
+if (!file.exists(control$Data_all_file)) {
+  source("scripts/00_download_data.R")
+}
+
 
 ##########################################
 # Load data
