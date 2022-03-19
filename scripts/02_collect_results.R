@@ -1,13 +1,3 @@
-# rm(list = ls())
-# try({
-#   path_to_dir <- "C:/Users/nicho/Documents/GitHub/multivariate_phenotype"
-#   setwd(path_to_dir)
-#   renv::activate(path_to_dir)
-#   # renv::restore(path_to_dir)
-# })
-# getwd()
-
-
 ##########################################
 # Source function files
 fns_to_source <- list.files("scripts/functions", full.names = TRUE)
@@ -23,7 +13,6 @@ control <- get_control_parameters_mv()
 # Load data
 Data_all <- readRDS(control$Data_all_file)
 
-
 ##########################################
 # Get table of analyses
 # run_type <- c("demo", "main", "benchmark", "test_benchmark")[3]
@@ -33,7 +22,7 @@ resl.comp <- compl <- Sigll <- Ksigl <- pimatl <- Sighatl <- Rl <- omegaseql <- 
 resl.comp$uv <- list(mn = Data_all$impc$Y_raw[Data_all$impc$sam_names, Data_all$impc$meas_names], 
                      sd = Data_all$impc$S_raw[Data_all$impc$sam_names, Data_all$impc$meas_names])
 
-for(scen in 1:nrow(analysis_table)){
+for (scen in 1:nrow(analysis_table)) {
   for (var_name in c("N", "P", "Data", "Meth", "nSig", "MVphen_K", "n_subsamples", "file_core_name")) {
     assign(var_name, analysis_table[scen, var_name])
   }
@@ -64,7 +53,7 @@ for(scen in 1:nrow(analysis_table)){
   compl[[namc]] <- shared.formatl
   objl[[namc]] <- list()
   pimatl[[namc]] <- Ksigl[[namc]] <- Sigll[[namc]] <- Sighatl[[namc]] <- Rl[[namc]] <- omegaseql[[namc]] <- samll[[namc]] <- list()
-  for(subsamseed in 1:n_subsamples){
+  for (subsamseed in 1:n_subsamples) {
     objl[[namc]][[subsamseed]] <- list()
     file_list <- get_file_list(control = control, file_core_name = analysis_table[scen, "file_core_name"], subsamseed = subsamseed)
     ###################################
@@ -106,8 +95,8 @@ for(scen in 1:nrow(analysis_table)){
       if (!emloaded | !resloaded) {
         warning(paste0(namc, " subsamseed ", subsamseed, " not loaded"))
       }
-      if(Meth == "MVphen" & nSig == 1 & Data == "impc"){
-        if(loocv.loaded){
+      if (namc == control$mv_meth_nam_use) {#Meth == "MVphen" & nSig == 1 & Data == "impc"){
+        if (loocv.loaded) {
           compl[[namc]]$loocv.mnarr[match(rownames(loocv.store$mn), sam_names), 
                                     match(colnames(loocv.store$mn), meas_names), subsamseed] <- loocv.store$mn
           compl[[namc]]$loocv.sdarr[match(rownames(loocv.store$sd), sam_names), 
@@ -153,8 +142,6 @@ for(scen in 1:nrow(analysis_table)){
       compl[[namc]]$llmat.zero[match(names(resl.store$zero$loglikv), sam_names), subsamseed] <- resl.store$zero$loglikv
     }
   }
-  
-  all(Sigll[[namc]][[subsamseed]][[1]] == Sigll[[namc]][[subsamseed]][[2]])
   
   ########################################################
   # Calculate combined Sig and R

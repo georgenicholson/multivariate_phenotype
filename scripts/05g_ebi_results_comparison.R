@@ -1,10 +1,11 @@
 file_preproc <- file.path(control$data_dir, "impc", "IMPC_results_preprocessed.RDS")
-import.raw.data <- TRUE
-if(import.raw.data){
+force.import.raw.data <- FALSE
+if(!file.exists(file_preproc) | force.import.raw.data){
   temp <- tempfile()
   download.file(url = "https://www.dropbox.com/s/j7a0b3ey855704o/IMPC_ALL_statistical_results.csv.gz?dl=1", temp, mode = "wb")
   unzipped_file <- file.path(control$data_dir, "impc", "IMPC_ALL_statistical_results.csv")
-  R.utils::decompressFile(temp, destname = unzipped_file, ext = "gz", FUN=gzfile)
+  file.remove(unzipped_file)
+  R.utils::decompressFile(temp, destname = unzipped_file, ext = "gz", FUN = gzfile)
   unlink(temp)
   rin <- read.csv(file = unzipped_file)
   Data_all <- readRDS(file = control$Data_all_file)
@@ -39,9 +40,6 @@ if(import.raw.data){
   geno.not.there <- prob.res[!prob.res$geno.sh %in% rin$geno.sh, fields.to.hugh]
   geno.there.but.missing.params <- prob.res[prob.res$geno.sh %in% rin$geno.sh, fields.to.hugh]
   saveRDS(rin, file = file_preproc)
-  # save(rin, file = file.ebi.impc.results)
-  # save(genemap, geno.there.but.missing.params, geno.not.there, 
-  #      file = "C:/Users/nicho/Documents/bauer_sync/projects/impc_mv_analysis/data_out/records_george_still_cannot_find_in_ebi_v11.RData")
 }
 
 rin <- readRDS(file = file_preproc)
@@ -74,14 +72,15 @@ library(xtable)
 tab.uv.ebi.comp[] <- prettyNum(tab.uv.ebi.comp, big.mark = ",")
 tabout.uv <- print(xtable(tab.uv.ebi.comp, label = "tab:uv_ebi_comparison", 
                        caption = "Comparison of signed phenotype hits between our UV model (left) and the existing phenotype calls in the IMPC database (top)"),
-                   caption.placement = "top")
-cat(tabout.uv, file = paste(dir.save, "/uv_ebi_comp_tab.txt", sep = ""))
+                   caption.placement = "top", 
+                   floating = FALSE)
+cat(tabout.uv, file = paste(control$dropbox_table_dir, "/uv_ebi_comp_tab.txt", sep = ""))
 tab.eb.ebi.comp[] <- prettyNum(tab.eb.ebi.comp, big.mark = ",")
 tabout.mv <- print(xtable(tab.eb.ebi.comp, label = "tab:eb_ebi_comparison", 
                           caption = "Comparison of signed phenotype hits between our MV model (left) and the existing phenotype calls in the IMPC database (top)"),
-                   caption.placement = "top")
-cat(tabout.mv, file = paste(dir.save, "/eb_ebi_comp_tab.txt", sep = ""))
-
+                   caption.placement = "top", 
+                   floating = FALSE)
+cat(tabout.mv, file = paste(control$dropbox_table_dir, "/eb_ebi_comp_tab.txt", sep = ""))
 
 tab.uv.eb.comp <- table(resimp$uv.perm.signsig, resimp[, mv_signsig_name])
 
@@ -91,9 +90,8 @@ resimp.disagree <- resimp[which(resimp[, mv_signsig_name] != 0 &
 resimp.disagree.uvmv <- resimp[which(resimp[, mv_signsig_name] != 0 & 
                                        resimp$uv.perm.signsig != 0 & 
                                        resimp[, mv_signsig_name] != resimp$uv.perm.signsig), ]
-table(resimp.all.agree$eb.perm.signsig)
 
-resimp.prior <- resimp#.all.agree
+resimp.prior <- resimp
 resimp.disagree$prior.p.pos <- sapply(resimp.disagree$ph, function(ph) 
   sum(resimp.prior$ebi.signsig[resimp.prior$ph == ph] == 1 | resimp.prior$uv.perm.signsig[resimp.prior$ph == ph] == 1, na.rm = T) / 
     sum(resimp.prior$ebi.signsig[resimp.prior$ph == ph] != 0 | resimp.prior$uv.perm.signsig[resimp.prior$ph == ph] != 0, na.rm = T))
@@ -137,7 +135,6 @@ p_measured <- 1 - p_missing
 methnamv <- c(ebi = "ebi.signsig", uv = "uv.perm.signsig", mv = mv_signsig_name)
 p_pos <- rad_pos <- list()
 for (meth in meths) {
-  # p_pos[[meth]] <- mean(res_ebi[, meth] != 0)
   p_pos[[meth]] <- mean(!is.na(resimp[, methnamv[meth]]) & resimp[, methnamv[meth]] != 0)
   rad_pos[[meth]] <- sqrt(p_pos[[meth]] / pi)
 }
@@ -145,8 +142,8 @@ p_miss_and_pos <- mean(res_missing != 0)
 
 
 n_obs <- sum(!resimp$imputed)
-n_miss <- n_tot - n_obs
 n_tot <- nrow(resimp)
+n_miss <- n_tot - n_obs
 n_ebi_pos <- sum(!is.na(resimp[, methnamv["ebi"]]) & resimp[, methnamv["ebi"]] != 0)
 n_uv_pos <- sum(!is.na(resimp[, methnamv["uv"]]) & resimp[, methnamv["uv"]] != 0)
 n_mv_pos_obs <- sum(!resimp$imputed & resimp[, methnamv["mv"]] != 0)
@@ -197,8 +194,11 @@ rr2 <- 2
 dseq <- seq(abs(rr1 - rr2), rr1 + rr2, by = .0001)
 plot(dseq, area(rr1, rr2, dseq))
 
-x3 <- p_obs / 2
-y3 <- .5
+p_obs <- n_obs / n_tot
+x3 <- .5#p_obs / 2
+x4 <- 1.5#p_obs + 1.1
+y3 <- .9
+y_leg <- 1.75
 x1 <- x3 + d13
 y1 <- y3
 cd <- d13
@@ -208,42 +208,69 @@ x2 <- x3 + (ad^2 - bd^2 - cd^2) / (-2 * cd)
 y2 <- y3 + sqrt(bd^2 - (x2 - x3)^2)
 n_mv_pos_miss <- sum(resimp$imputed & resimp[, methnamv["mv"]] != 0)
 p_miss <- n_miss / n_tot
-p_obs <- n_obs / n_tot
 table(resimp[, methnamv["ebi"]], resimp[, methnamv["mv"]])
 
-pdf(file = paste0(control$dropbox_figure_dir, "/venn_diagrams.pdf"), 12, 8.5)
-par(oma = c(1, 1, 1, 1), mar = c(0, 0, 6, 20))
+r_tot_observed <- sqrt(p_obs  / pi)
+r_tot_missing <- sqrt(p_miss  / pi)
+
+jpeg(filename = paste0(control$dropbox_figure_dir, "/venn_diagrams.jpg"), width = 12, height = 8.5, 
+     units = "in", res = 500)
+# pdf(file = paste0(control$dropbox_figure_dir, "/venn_diagrams.pdf"), 12, 8.5)
+par(oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0))
 col_use <- rgb(red = c(1, 0.2, 0), green = c(0, 0.2, 0), blue = c(0, 0.2, 1), alpha = .45)
 # viridis::rocket(n = 3, alpha = .6)#[sample(1:3, 3)]
 #col_use <- viridis::turbo(n = 3, alpha = .5)#[sample(1:3, 3)]
 names(col_use) <- meths
-plot(0, xlim = c(0, 1), ylim = c(0, 1), xaxt = "n", yaxt = "n", xlab = "", ylab = "", ty = "l", xaxs = "i", yaxs = "i")
-polygon(x = c(0, rep(p_obs, 2), 0, 0), y = c(0, 0, 1, 1, 0), col = "white", border = 1)
+lims_use <- c(0, 2)
+plot(0, xlim = lims_use, ylim = lims_use, xaxt = "n", yaxt = "n", 
+     xlab = "", ylab = "", ty = "l", xaxs = "i", yaxs = "i",
+     bty = "n")
+# polygon(x = c(0, rep(p_obs, 2), 0, 0), y = c(0, 0, 1, 1, 0), col = "white", border = 1)
 plotrix::draw.circle(x = x3, y = y3, radius = r3, nv = 10000, border = NA, 
                      col = col_use["mv"], lty = 1, density = NULL, angle = 45, lwd = 1)
+plotrix::draw.circle(x = x3, y = y3, radius = r_tot_observed, nv = 10000, border = "black", 
+                     col = NA, lty = 1, density = NULL, angle = 45, lwd = 2)
 plotrix::draw.circle(x = x1, y = y1, radius = r1, nv = 10000, border = NA, 
                      col = col_use["uv"], lty = 1, density = NULL, angle = 45, lwd = 1)
 plotrix::draw.circle(x = x2, y = y2, radius = r2, nv = 10000, border = NA, 
                      col = col_use["ebi"], lty = 1, density = NULL, angle = 45, lwd = 1)
-plotrix::draw.circle(x = p_obs + p_miss / 2, y = .5, radius = sqrt(n_mv_pos_miss / n_tot / pi), nv = 10000, border = NA, 
+plotrix::draw.circle(x = x4, y = y3, radius = sqrt(n_mv_pos_miss / n_tot / pi), nv = 10000, border = NA, 
                      col = col_use["mv"], lty = 1, density = NULL, angle = 45, lwd = 1)
+plotrix::draw.circle(x = x4, y = y3, radius = r_tot_missing, nv = 10000, border = "red", 
+                     col = NA, lty = 1, density = NULL, angle = 45, lwd = 2)
 cexax <- 1.4
-mtext(side = 3, text = c("Observed data", "Missing data"), at = c(p_obs / 2, p_obs + p_miss / 2), line = 1, cex = cexax)
 par(xpd = NA)
-# legend(x = .5, y = 1.09, legend = c("IMPC database", "UV method", "MV method"), col = col_use, pch = 19, pt.cex = 2, xjust = .5)
-legend(x = 1.03, y = .75, legend = c("IMPC database", "UV method", "MV method"), col = col_use,
-        pch = 19, pt.cex = 2, xjust = 0, cex = cexax)
+legend(x = x3, y = y_leg, 
+            legend = paste0(c("All observed measurments (n = ", "IMPC database (# hits = ", "UV method (# hits = ", "MV method (# hits = "), 
+                                      prettyNum(c(n_obs, n_ebi_pos, n_uv_pos, n_mv_pos_obs), big.mark = ","), 
+                                    ")"),
+            pt.bg = c("white", col_use), 
+            col = c(1, NA, NA, NA),
+            pch = 21, 
+            pt.cex = 3, 
+            xjust = .5, yjust = .5, 
+            cex = cexax, 
+            title = "Observed data")
+
+legend(x = x4, y = y_leg, legend = paste0(c("All missing measurements (n = ", "MV method (# hits = "), 
+                                      prettyNum(c(n_miss, n_mv_pos_miss), big.mark = ","), ")"), 
+       pt.bg = c("white", col_use["mv"]), col = c(2, NA),
+       pch = 21, pt.cex = 3, xjust = 0.5, yjust = .5, cex = cexax, title = "Missing data")
 par(xpd = F)
 dev.off()
 
-# plotrix::draw.circle(x = p_obs / 2, y = .5, radius = sqrt(n_uv_pos / n_tot / pi), nv = 10000, border = NULL, 
-#                      col = col_use["uv"], lty = 1, density = NULL, angle = 45, lwd = 1)
-for (meth in c("mv", "ebi", "uv")) {
-  plotrix::draw.circle(x = p_obs / 2, y = .5, radius = rad_pos[[meth]], nv = 10000, border = col_use[meth], 
-                     col = col_use[meth], lty = 1, density = NULL, angle = 45, lwd = 1)
-  plotrix::draw.circle(x = p_obs + p_miss / 2, y = .5, radius = rad_pos[[meth]], nv = 10000, border = col_use[meth], 
-                       col = col_use[meth], lty = 1, density = NULL, angle = 45, lwd = 1)
+
+
+
+
+save.num <- c("n_obs", "n_miss")
+for (numc in save.num) {
+  write.table(prettyNum(eval(as.name(numc)), big.mark = ","), file = paste(control$dropbox_text_numbers_dir, "/", numc, ".txt", sep = ""), 
+              col.names = F, row.names = F, quote = F)
 }
+
+
+
 
 
 

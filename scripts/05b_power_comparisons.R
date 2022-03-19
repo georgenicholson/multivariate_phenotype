@@ -92,22 +92,19 @@ abline(v = c(-1, 1), col = 2, lty = 2)
 atv <- c((-limn - 1) / 2, 0, (limn + 1) / 2)
 for(i in 1:3){
   for(j in 1:3){
-    # labc <- paste(formatC(100 * ptab[i, j], format = "f", digits = 1), "% (", prettyNum(ntab[i, j], big.mark = ","), ")", sep = "")
     labc <- paste(prettyNum(ntab[i, j], big.mark = ","), " (", formatC(100 * ptab[i, j], format = "f", digits = 1), "%)", sep = "")
     legend(x = atv[i], y = atv[j], legend = labc, text.col = 1, bg = adjustcolor("white", .85), xjust = .5)
   }
 }
 numv <- formatC(c(fdrci[[1]], fdrci[[2]]) * 100, format = "f", digits = 1)
 fdrlab <- paste("Discordance-implied FDR ", numv[1], "% (", numv[2], "% - ", numv[3], "%)", sep = "")
-mtext(side = 3, text = fdrlab, line = .5, cex = cexax2)
+# mtext(side = 3, text = fdrlab, line = .5, cex = cexax2)
 dev.off()
 file.copy(from = paste(control$figure_dir, "/", fnamc, sep = ""),
           to = paste(control$dropbox_figure_dir, "/", fnamc, sep = ""), overwrite = TRUE)
 
-
 ###############################################
 #Second set of numbers for text
-
 uv.mv.agree.n <- ntab["1", "1"] + ntab["-1", "-1"]
 uv.mv.agree.p <- ptab["1", "1"] + ptab["-1", "-1"]
 uv.mv.agree.p.of.uv <- uv.mv.agree.n / n.sig.uv
@@ -127,7 +124,6 @@ for(numc in save.prop)
   write.table(formatC(100 * eval(as.name(numc)), digits = 1, format = "f"), file = paste(control$dropbox_text_numbers_dir, "/", numc, ".txt", sep = ""),
               col.names = F, row.names = F, quote = F)
 
-
 ###############################################
 #UV/MV global line-by-line, phen-by-phen scatterplot
 resimp1 <- resimp[resimp$line.type == control$nam.truemut, ]
@@ -135,7 +131,6 @@ resimp1 <- resimp1[order(resimp1$geno), ]
 trueline.un <- unique(resimp1$geno)
 froms <- match(trueline.un, resimp1$geno)
 tos <- c(froms[2:length(froms)] - 1, nrow(resimp1))
-
 
 signifl <- Map(function(from, to) resimp1[from:to, c("uv.sig", "eb.sig")], from = froms, to = tos)
 line.n.uv <- sapply(signifl, function(x) sum(x$uv.sig, na.rm = T))
@@ -148,7 +143,7 @@ plty <- "non"
 xc <- n.uv
 yc <- switch(plty, non = n.eb.non,
              imp = n.eb.non + n.eb.imp)
-lims <- range(c(xc, yc))#range(c(log(1 + n.uv), log(1 + n.eb.non + n.eb.imp)))
+lims <- range(c(xc, yc))
 repdat <- aggregate(data.frame(xc, yc), by = list(xc, yc), length)
 circmult1 <- 5
 circmult2 <- 1 / 3
@@ -169,7 +164,7 @@ abline(0, 1)
 xc <- line.n.uv
 yc <- switch(plty, non = line.n.eb.non,
              imp = line.n.eb.non + line.n.eb.imp)
-lims <- range(c(xc, yc))#range(c(log(1 + n.uv), log(1 + n.eb.non + n.eb.imp)))
+lims <- range(c(xc, yc))
 repdat <- aggregate(data.frame(xc, yc), by = list(xc, yc), length)
 symbols(repdat$Group.1, repdat$Group.2, circles = sqrt(repdat$xc) * circmult2, inches = F, xlim = lims, ylim = lims, las = 1,
         xlab = "", ylab = "", cex.axis = axnumcex)
@@ -182,8 +177,6 @@ mtext(side = 3, line = linc2, at = 0, text = "(b)", cex = cexax3)
 dev.off()
 file.copy(from = paste(control$figure_dir, "/", fnamc, sep = ""),
           to = paste(control$dropbox_figure_dir, "/", fnamc, sep = ""), overwrite = TRUE)
-
-
 
 #################################################
 #Numbers for line-by-line comparison
@@ -228,12 +221,10 @@ qseq <- seq(0, .3, len = 100000)
 fdrseq1 <- (4 - sqrt(4^2 - 4 * 3 * 2 * qseq)) / (2 * 3)
 fdrseq2 <- (4 + sqrt(4^2 - 4 * 3 * 2 * qseq)) / (2 * 3)
 fnamc <- "discordance_fdr.jpg"
-# pdf(paste(control$figure_dir, "/mv_vs_uv_power.pdf", sep = ""), 12, 12)
 jpeg(paste(control$figure_dir, "/", fnamc, sep = ""), 6, 6, units = "in", res = 500)
 par(mfrow = c(1, 1))
 par(mar = c(6, 6, 2, 2))
 plot(qseq, fdrseq1, ty = "l", ylab = "", xlab = "", las = 1, xaxs = "i", yaxs = "i")
-# abline(0, 1, lty = 3)
 mtext(side = 1, text = "P(two methods discordant | both methods annotate)", line = 4)
 mtext(side = 2, text = "Discordance-implied FDR", line = 4)
 dev.off()
@@ -249,13 +240,10 @@ file.copy(from = paste(control$figure_dir, "/", fnamc, sep = ""),
 ###############################################
 #UV/MV global line-by-line, phen-by-phen scatterplot
 resimp1 <- resimp[which(resimp$line.type == control$nam.truemut), ]
-# resimp1 <- resimp[resimp$line.type == nam.truemut, ]
 resimp1 <- resimp1[order(resimp1$geno), ]
 trueline.un <- unique(resimp1$geno)
 froms <- match(trueline.un, resimp1$geno)
 tos <- c(froms[2:length(froms)] - 1, nrow(resimp1))
-# resimp1$uv.sig <- resimp1$uv.signsig != 0
-# resimp1$eb.sig <- resimp1$eb.perm.signsig != 0
 signifl <- Map(function(from, to) resimp1[from:to, c("uv.sig", "eb.sig")], from = froms, to = tos)
 line.n.uv <- sapply(signifl, function(x) sum(x$uv.sig, na.rm = T))
 line.n.eb.non <- sapply(signifl, function(x) sum(x$eb.sig[!is.na(x$uv.sig)], na.rm = T))
@@ -268,12 +256,11 @@ fnamc <- "combined_power_plot.jpg"
 jpeg(file = paste(control$figure_dir, "/", fnamc, sep = ""), 12, 15, units = "in", res = 500)
 layout(matrix(c(1:2, 3, 3), 2, 2, byrow = T))
 par(oma = c(20, 4, 0, 0))
-# par(mfrow = c(1, 2), mar = c(6, 6, 4, 4), oma = c(0, 0, 0, 0))
 plty <- "non"
 xc <- n.uv
 yc <- switch(plty, non = n.eb.non,
              imp = n.eb.non + n.eb.imp)
-lims <- range(c(xc, yc))#range(c(log(1 + n.uv), log(1 + n.eb.non + n.eb.imp)))
+lims <- range(c(xc, yc))
 repdat <- aggregate(data.frame(xc, yc), by = list(xc, yc), length)
 circmult1 <- 5
 circmult2 <- 1 / 3
@@ -294,7 +281,7 @@ abline(0, 1)
 xc <- line.n.uv
 yc <- switch(plty, non = line.n.eb.non,
              imp = line.n.eb.non + line.n.eb.imp)
-lims <- range(c(xc, yc))#range(c(log(1 + n.uv), log(1 + n.eb.non + n.eb.imp)))
+lims <- range(c(xc, yc))
 repdat <- aggregate(data.frame(xc, yc), by = list(xc, yc), length)
 symbols(repdat$Group.1, repdat$Group.2, circles = sqrt(repdat$xc) * circmult2, inches = F, xlim = lims, ylim = lims, las = 1,
         xlab = "", ylab = "", cex.axis = axnumcex)
@@ -350,14 +337,12 @@ lines(x = 1:nproc + .16 * eps, y = powtab$eb.imp.est, col = colv["eb.imp"])
 abline(v = .5 + 0:nproc)
 axis(side = 1, at = 1:nproc, labels = powtab$procnam, las = 2, cex.axis = cexlab)
 mtext(side = 2, line = 4, text = "Proportion of KO lines with one or more hits", cex = cexlab)
-legend(x = "topleft", legend = c("MV model (non-imputed)", "MV model (imputed)", "UV model"), 
+legend(x = "topleft", legend = c("MV model (observed data)", "MV model (missing data)", "UV model"), 
        col = colv[c("eb.non", "eb.imp", "uv")], lty = 1, cex = cexlab)
 mtext(side = 3, line = linc2, at = 0, text = "(c)", cex = cexax3)
 dev.off()
 file.copy(from = paste(control$figure_dir, "/", fnamc, sep = ""),
           to = paste(control$dropbox_figure_dir, "/", fnamc, sep = ""), overwrite = TRUE)
-
-
 
 diff.text <- ydum[, "eb.non.est"] - ydum[, "uv.est"]
 names(diff.text) <- rownames(ydum)
@@ -371,269 +356,78 @@ for(numc in save.prop)
                 col.names = F, row.names = F, quote = F)
 
 
-
-
-
-
-more.power.plots <- F
-
-if(more.power.plots){
-  fnamc <- "line_by_line_uv_mv_comp.jpg"
-  # pdf(paste(control$figure_dir, "/mv_vs_uv_power.pdf", sep = ""), 12, 12)
-  jpeg(paste(control$figure_dir, "/", fnamc, sep = ""), 9, 9, units = "in", res = 500)
-  par(mfrow = c(2, 2), mar = c(4, 4, 2, 2), oma = c(2, 2, 2, 2))
-  labs <- c(0, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000)
-  for(plty in c("non", "imp")){
-    xc <- log(1 + n.uv)
-    yc <- switch(plty, non = log(1 + n.eb.non),
-                 imp = log(1 + n.eb.non + n.eb.imp))
-    lims <- c(0, log(1000))#range(c(log(1 + n.uv), log(1 + n.eb.non + n.eb.imp)))
-    repdat <- aggregate(data.frame(xc, yc), by = list(xc, yc), length)
-    symbols(repdat$Group.1, repdat$Group.2, circles = sqrt(repdat$xc) / 30, inches = F, xaxt = "n", yaxt = "n", xlim = lims, ylim = lims, las = 2,
-            xlab = "UV analysis, number of annotations per phenotype (log scale)", ylab = "MV analysis, number of annotations per phenotype (log scale)", cex = .5)
-    # plot(xc, yc, xaxt = "n", yaxt = "n", xlim = lims, ylim = lims, cex = .5,
-    #      xlab = "UV analysis, number of annotations per phenotype (log scale)", ylab = "MV analysis, number of annotations per phenotype (log scale)")
-    abline(0, 1)
-    for(ax in 1:2) 
-      axis(side = ax, at = log(1 + labs), labels = labs)
-  }
-  labs <- c(0, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000)
-  for(plty in c("non", "imp")){
-    xc <- log(1 + line.n.uv)
-    yc <- switch(plty, non = log(1 + line.n.eb.non),
-                 imp = log(1 + line.n.eb.non + line.n.eb.imp))
-  #  lims <- range(c(0, log(1 + line.n.uv), log(1 + line.n.eb.non + line.n.eb.imp)))
-    repdat <- aggregate(data.frame(xc, yc), by = list(xc, yc), length)
-    symbols(repdat$Group.1, repdat$Group.2, circles = sqrt(repdat$xc) / 30, inches = F, xaxt = "n", yaxt = "n", xlim = lims, ylim = lims, las = 2, 
-            xlab = "UV analysis, number of annotations per line (log scale)", ylab = "MV analysis, number of annotations per line (log scale)", cex = .5)
-    #plot(xc, yc, xaxt = "n", yaxt = "n", xlim = lims, ylim = lims, xlab = "Number of ")
-    abline(0, 1)
-    for(ax in 1:2) 
-      axis(side = ax, at = log(1 + labs), labels = labs)
-  }
-  dev.off()
-  file.copy(from = paste(control$figure_dir, "/", fnamc, sep = ""),
-            to = paste(paper.figures.dropbox, "/", fnamc, sep = ""), overwrite = TRUE)
-  
-  
-  
-  
-  
-  labs <- c(0, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000)
-  for(plty in c("non", "imp")){
-    xc <- log(1 + n.uv)
-    yc <- switch(plty, non = log(1 + n.eb.non),
-                 imp = log(1 + n.eb.non + n.eb.imp))
-    lims <- c(0, log(1000))#range(c(log(1 + n.uv), log(1 + n.eb.non + n.eb.imp)))
-    repdat <- aggregate(data.frame(xc, yc), by = list(xc, yc), length)
-    symbols(repdat$Group.1, repdat$Group.2, circles = sqrt(repdat$xc) / 30, inches = F, xaxt = "n", yaxt = "n", xlim = lims, ylim = lims, las = 2,
-            xlab = "UV analysis, number of annotations per phenotype (log scale)", ylab = "MV analysis, number of annotations per phenotype (log scale)", cex = .5)
-    # plot(xc, yc, xaxt = "n", yaxt = "n", xlim = lims, ylim = lims, cex = .5,
-    #      xlab = "UV analysis, number of annotations per phenotype (log scale)", ylab = "MV analysis, number of annotations per phenotype (log scale)")
-    abline(0, 1)
-    for(ax in 1:2) 
-      axis(side = ax, at = log(1 + labs), labels = labs)
-  }
-  labs <- c(0, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000)
-  for(plty in c("non", "imp")){
-    xc <- log(1 + line.n.uv)
-    yc <- switch(plty, non = log(1 + line.n.eb.non),
-                 imp = log(1 + line.n.eb.non + line.n.eb.imp))
-    #  lims <- range(c(0, log(1 + line.n.uv), log(1 + line.n.eb.non + line.n.eb.imp)))
-    repdat <- aggregate(data.frame(xc, yc), by = list(xc, yc), length)
-    symbols(repdat$Group.1, repdat$Group.2, circles = sqrt(repdat$xc) / 30, inches = F, xaxt = "n", yaxt = "n", xlim = lims, ylim = lims, las = 2, 
-            xlab = "UV analysis, number of annotations per line (log scale)", ylab = "MV analysis, number of annotations per line (log scale)", cex = .5)
-    #plot(xc, yc, xaxt = "n", yaxt = "n", xlim = lims, ylim = lims, xlab = "Number of ")
-    abline(0, 1)
-    for(ax in 1:2) 
-      axis(side = ax, at = log(1 + labs), labels = labs)
-  }
-  dev.off()
-  
-  
-  
-  # 
-  # 
-  # 
-  # plot(log(1 + n.uv), log(1 + n.eb.non + n.eb.imp), xaxt = "n", yaxt = "n")
-  # for(ax in 1:2) 
-  #   axis(side = ax, at = log(1 + labs), labels = labs)
-  # 
-  # 
-  # 
-  # 
-  # grp.max <- c(0, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000)
-  # grp.min <- c(0, 1, 2, grp.max[3:(length(grp.max) - 1)] + 1)
-  # grpnam <- apply(cbind(grp.min, grp.max), 1, function(v) paste(unique(v), collapse = "-"))
-  # grpnamtab <- data.frame(grpnam = grpnam, grp.min = grp.min, grp.max = grp.max)
-  # grpdat <- data.frame(geno = trueline.un, n.uv = line.n.uv, n.eb.non = line.n.eb.non, n.eb.imp = line.n.eb.imp,
-  #                      n.eb.both = line.n.eb.non + line.n.eb.imp)
-  # grpdat$uv.grp.num <- apply(outer(grpdat$n.uv, grp.max, "<=") * outer(grpdat$n.uv, grp.min, ">="), 1, function(v) match(T, v))
-  # grpdat$eb.non.grp.num <- apply(outer(grpdat$n.eb.non, grp.max, "<=") * outer(grpdat$n.eb.non, grp.min, ">="), 1, function(v) match(T, v))
-  # 
-  # image(log(1 + table(grpdat$uv.grp.num, grpdat$eb.non.grp.num)))
-  # image()
-  # 
-  # hist(line.n.uv)
-  # hist(line.n.eb.non)
-  
-  
-  pdf("X:/projects/impc_mv_analysis/plots/mv_uv_scatter.pdf", 12, 12)
-  lc = 5
-  colv <- rep(1, nrow(resimp))
-  colv[abs(resimp$uv.t) > resimp$uv.th.final & abs(resimp$eb.t) < resimp$eb.th.final] <- 2
-  colv[abs(resimp$uv.t) < resimp$uv.th.final & abs(resimp$eb.t) > resimp$eb.th.final] <- 3
-  colv[abs(resimp$uv.t) > resimp$uv.th.final & abs(resimp$eb.t) > resimp$eb.th.final] <- 4
-  plot(resimp$uv.t[order(colv)], resimp$eb.t[order(colv)], xlim = c(-1, 1) * lc, ylim = c(-1, 1) * lc, xlab = "UV", 
-       ylab = "uv", pch = ".", col = colv[order(colv)], cex = 1.5)
-  abline(0, 1)
-  #abline(h = c(-1, 1) * mean(resimp$eb.th.final, na.rm = T), v = c(-1, 1) * mean(resimp$uv.th.final, na.rm = T))
-  dev.off()
-  
-  for(curpl in c("null", "true")){
-    fnamc <- paste("meth_", estimation.meth, "_", curpl, "_uv_mv_comparison.jpeg", sep = "")
-    jpeg(paste(chris.pres.dropbox, "/", fnamc, sep = ""), 9, 9, units = "in", res = 500)
-    par(mfrow = c(2, 2))
-    resimpc <- switch(curpl,
-                      null = resimp[resimp$line.type == control$nam.negcon & !is.na(resimp$uv.t), ],
-                      true = resimp[resimp$line.type == control$nam.truemut & !is.na(resimp$uv.t), ])
-    plot(resimpc$uv.mn, resimpc$eb.mn)
-    abline(0, 1)
-    plot(resimpc$uv.sd, resimpc$eb.sd)
-    abline(0, 1)
-    plot(resimpc$uv.t, resimpc$eb.t)
-    abline(0, 1)
-    dev.off()
-  }
-  
-  smoothScatter(resimp$uv.t / resimp$uv.th.final, resimp$eb.t / resimp$eb.th.final, pch = ".", 
-                xlim = c(-1, 1) * limn, ylim = c(-1, 1) * limn, nbin = 1000)
-  abline(h = c(-1, 1), col = 2)
-  abline(v = c(-1, 1), col = 2)
-  
-  
-  
-  print(table((abs(resimp$uv.t) > resimp$uv.th.final), 
-              (abs(resimp$eb.t) > resimp$eb.th.final)) / sum(!is.na(resimp$uv.t)))
-  numtab <- table((abs(resimp$uv.t) > resimp$uv.th.final), 
-                  (abs(resimp$eb.t) > resimp$eb.th.final))
-  mean(resimp$eb.sig[is.na(resimp$uv.t)], na.rm = T)
-  # table((abs(resimp$uv.t) > resimp$uv.th.final), 
-  #       (abs(resimp$mv.t) > resimp$mv.th.final))
-  # table((abs(resimp$mv.t) > resimp$mv.th.final), 
-  #       (abs(resimp$eb.t) > resimp$eb.th.final))
-  sum(resimp$eb.sig[is.na(resimp$uv.t)], na.rm = T)
-  
-  mean(resimp$eb.sig[is.na(resimp$uv.t)], na.rm = T)
-  fpr.true.imp <- mean(resimp$eb.sig[is.na(resimp$uv.t) & resimp$line.type == control$nam.truemut], na.rm = T)
-  fpr.neg.imp <- mean(resimp$eb.sig[is.na(resimp$uv.t) & resimp$line.type == control$nam.negcon], na.rm = T)
-  fpr.neg.imp / fpr.true.imp
-  fpr.true.non <- mean(resimp$eb.sig[!is.na(resimp$uv.t) & resimp$line.type == control$nam.truemut], na.rm = T)
-  fpr.neg.non <- mean(resimp$eb.sig[!is.na(resimp$uv.t) & resimp$line.type == control$nam.negcon], na.rm = T)
-  fpr.neg.non / fpr.true.non
-  
-  
-  
-  
-  #t-statistic QQ-plot for Chris' talk
-  fnamc <- paste("t_statistic_qqplot_mv_uv.jpeg", sep = "")
-  jpeg(paste(chris.pres.dropbox, "/", fnamc, sep = ""), 7, 7, units = "in", res = 500)
-  par(mfrow = c(1, 1), mar = c(5, 5, 5, 5))
-  cexax <- 2
-  linc <- 3.5
-  cexax1 <- 1.4
-  colv <- rep(1:2, times = c(length(qq.mv$x), length(qq.uv$x)))
-  plot(c(qq.mv$x, qq.uv$x), c(qq.mv$y, qq.uv$y), ty = "n", xlab = "", ylab = "", xaxt = "n", yaxt = "n")
-  axis(side = 1, cex.axis = cexax1, las = 1)
-  axis(side = 2, cex.axis = cexax1, las = 1)
-  points(c(qq.mv$x, qq.uv$x), c(qq.mv$y, qq.uv$y), cex = .6, col = colv)
-  mtext(side = 1, text = "Permutation null t quantile", cex = cexax, line = linc)
-  mtext(side = 2, text = "KO gene t quantile", cex = cexax, line = linc)
-  legend(x = "topleft", legend = c("MV", "UV"), pch = 1, col = 1:2, cex = 1.4)
-  abline(0, 1)
-  dev.off()
-  
-  
-  cdf.mv.qval <- ecdf(p.adjust(p.mv, meth = "BH"))
-  cdf.uv.qval <- ecdf(p.adjust(p.uv, meth = "BH"))
-  cdf.mv <- ecdf(p.mv)
-  cdf.uv <- ecdf(p.uv)
-  pseq <- 10^seq(-6, -2, len = 1000)
-  matplot(pseq, cbind(cdf.mv(pseq), cdf.uv(pseq)), ty = "l", log = "x", lty = 1)
-  matplot(pseq, cbind(cdf.mv.qval(pseq), cdf.uv.qval(pseq)), ty = "l", log = "x", lty = 1)
-  
-  
-  
-  tseq <- 10^seq(0, 1, len = 1000)
-  matplot(tseq, 1 - cbind(ecdf(abs(true.t.mv))(tseq), ecdf(abs(true.t.uv))(tseq)), ty = "l", log = "", lty = 1)
-  
-  
-  
-  # fnamc <- paste("perm_pvalue_histograms_densities.jpeg", sep = "")
-  # jpeg(paste(chris.pres.dropbox, "/", fnamc, sep = ""), 9, 9, units = "in", res = 500)
-  par(mfrow = c(2, 2))
-  hist(log10(p.mv), main = "MV Permutation p-values", xlab = "p")
-  hist(log10(p.uv), main = "UV Permutation p-values", xlab = "p")
-  plot(0, ty = "l", xlim = c(0, 1), ylim = c(0, max(c(d.mv$y, d.uv$y))), xaxs = "i", xlab = "p", ylab = "Density")
-  lines(x = d.mv$x, y = d.mv$y)
-  lines(x = d.uv$x, y = d.uv$y, col = "red")
-  legend(x = "topright", legend = c("MV perm. p-values", "UV perm. p-values"), lty = 1, col = 1:2)
-  # dev.off()
-  
-  
-  par(mfrow = c(2, 2))
-  qq.mv <- qqplot(null.t.mv, true.t.mv, plot.it = FALSE)
-  qq.uv <- qqplot(null.t.uv, true.t.uv, plot.it = FALSE)
-  
-  # dc <- d[d$ph == "IMPC_DXA_010_001", ]
-  # mean(table(dc$geno))
-  
-  
-  namc <- "isba_pres_mv_vs_uv_power.jpeg"
-  jpeg(file = paste(control$figure_dir, "/", namc, sep = ""), 11.5, 6, units = "in", res = 500)
-  # pdf(paste(control$figure_dir, "/", namc, sep = ""), 12, 6)
-  par(mfrow = c(1, 2), mar = c(6, 6, 4, 4), oma = c(0, 0, 0, 0))
-  plty <- "non"
-  xc <- n.uv
-  yc <- switch(plty, non = n.eb.non,
-               imp = n.eb.non + n.eb.imp)
-  lims <- range(c(xc, yc))#range(c(log(1 + n.uv), log(1 + n.eb.non + n.eb.imp)))
-  repdat <- aggregate(data.frame(xc, yc), by = list(xc, yc), length)
-  circmult1 <- 5
-  circmult2 <- 1 / 3
-  cexax <- 1.4
-  cexax2 <- 1.7
-  axnumcex <- 1.4
-  symbols(repdat$Group.1, repdat$Group.2, circles = sqrt(repdat$xc) * circmult1, inches = F, xlim = lims, ylim = lims, las = 1,
-          xlab = "", ylab = "", cex.axis = axnumcex)
-  linc <- 3.5
-  linc2 <- 2
-  mtext(side = 1, line = linc, text = "UV analysis", cex = cexax)
-  mtext(side = 2, line = linc, text = "MV analysis", cex = cexax)
-  mtext(side = 3, line = linc2, text = "Annotations per phenotype", cex = cexax2)
-  abline(0, 1)
-  
-  xc <- line.n.uv
-  yc <- switch(plty, non = line.n.eb.non,
-               imp = line.n.eb.non + line.n.eb.imp)
-  lims <- range(c(xc, yc))#range(c(log(1 + n.uv), log(1 + n.eb.non + n.eb.imp)))
-  repdat <- aggregate(data.frame(xc, yc), by = list(xc, yc), length)
-  symbols(repdat$Group.1, repdat$Group.2, circles = sqrt(repdat$xc) * circmult2, inches = F, xlim = lims, ylim = lims, las = 1,
-          xlab = "", ylab = "", cex.axis = axnumcex)
-  abline(0, 1)
-  mtext(side = 1, line = linc, text = "UV analysis", cex = cexax)
-  mtext(side = 2, line = linc, text = "MV analysis", cex = cexax)
-  mtext(side = 3, line = linc2, text = "Annotations per KO gene", cex = cexax2)
-  mtext(side = 3, line = linc2 / 3, text = "(point area proportional to number)", cex = cexax2 * .75)
-  dev.off()
-  file.copy(from = paste(control$figure_dir, "/", namc, sep = ""),
-            to = paste(chris.pres.dropbox, "/", namc, sep = ""), overwrite = TRUE)
+###############################################
+#Plot estimated power by phenotype
+##########################################
+# Calc power and missingness by phenotype
+phenun <- unique(resimp$ph)
+powtab.ph <- data.frame(ph = phenun, uv = NA, eb = NA, loo.eb = NA, n.uv = NA, n.eb.non = NA, n.loo.eb = NA)
+rownames(powtab.ph) <- phenun
+miss_df <- data.frame(ph = phenun, missing_prop = NA)
+for (phenc in phenun) {
+  resc <- resimp[!is.na(resimp$uv.t) & resimp$ph == phenc & resimp$line.type == "trueMut", ]
+  powtab.ph[phenc, "x.uv"] <- length(unique(resc[which(resc$uv.signsig != 0), "geno"]))
+  powtab.ph[phenc, "x.eb.non"] <- length(unique(resc[which(resc$eb.signsig != 0), "geno"]))
+  powtab.ph[phenc, c("n.uv", "n.eb.non", "n.loo.eb")] <- rep(length(unique(resc$geno)), 3)
+  resc.imp <- resimp[resimp$imputed & resimp$ph == phenc & resimp$line.type == "trueMut", ]
+  powtab.ph[phenc, "x.eb.imp"] <- length(unique(resc.imp[which(resc.imp$eb.signsig != 0), "geno"]))
+  powtab.ph[phenc, "n.eb.imp"] <- length(unique(resc.imp$geno))
+  miss_df[match(phenc, miss_df$ph), "missing_prop"] <- nrow(resc) / (nrow(resc) + nrow(resc.imp))
 }
+uv.ci <- binconf(x = powtab.ph$x.uv, n = powtab.ph$n.uv)
+powtab.ph[, c("uv.est", "uv.l", "uv.u")] <- uv.ci
+eb.non.ci <- binconf(x = powtab.ph$x.eb.non, n = powtab.ph$n.eb.non)
+powtab.ph[, c("eb.non.est", "eb.non.l", "eb.non.u")] <- eb.non.ci
+eb.imp.ci <- binconf(x = powtab.ph$x.eb.imp, n = powtab.ph$n.eb.imp)
+powtab.ph[, c("eb.imp.est", "eb.imp.l", "eb.imp.u")] <- eb.imp.ci
+powtab.ph <- powtab.ph[match(Data_all$impc$phord, powtab.ph$ph), ]
+powtab.ph$procnam <- Data_all$impc$phmap[match(powtab.ph$ph, Data_all$impc$phmap$ph), "procnam"]
 
+##########################################
+# Plot the data
+ydum <- powtab.ph[, c("uv.est", "uv.l", "uv.u", "eb.non.est", "eb.non.l", "eb.non.u", 
+                      "eb.imp.est", "eb.imp.l", "eb.imp.u")]
+nphen <- length(phenun)
+xpl <- 1:nphen
+cexlab = 1
+fnamc <- "power_by_phenotype.jpg"
+jpeg(paste(control$figure_dir, "/", fnamc, sep = ""), 20, 12, units = "in", res = 1000)
+hei_prop <- .7
+layout(mat = matrix(1:2, 2, 1), heights = c(1 - hei_prop, hei_prop))
+par(oma = c(25, 8, 2, 6), mar = c(0, 0, 0, 0))
 
+plot(x = xpl, y = 100 * miss_df$missing_prop, ty = "n", xaxt = "n", yaxt = "n", xlab = "", ylab = "", xlim = c(.5, nphen + .5), ylim = c(0, 100), 
+        xaxs = "i", yaxs = "i", las = 2, cex.axis = cexlab)
+axis(side = 4, las = 1)
+points(x = xpl, y = 100 * miss_df$missing_prop, pch = 19)
+lines(x = xpl, y = 100 * miss_df$missing_prop, pch = 19)
+abline(v = match(procun, powtab.ph$procnam) - .5, col = "black")
+mtext(side = 4, line = 2.5, text = "% of data missing", cex = cexlab)
 
+matplot(x = xpl, y = ydum, ty = "n", xaxt = "n", xlab = "", ylab = "", xlim = c(.5, nphen + .5), ylim = c(0, max(ydum)), 
+        xaxs = "i", yaxs = "i", las = 2, cex.axis = cexlab)
+abline(v = match(procun, powtab.ph$procnam) - .5, col = "black")
+eps = .4
+points(x = rep(xpl, 3) + rep(c(-.5, -.0, .5) * eps, each = nphen), 
+       y = c(powtab.ph$uv.est, powtab.ph$eb.non.est, powtab.ph$eb.imp.est), col = rep(colv[c("uv", "eb.non", "eb.imp")], each = nphen),
+       pch = 19)
+for(i in 1:nphen){
+  lines(x = rep(i - .5 * eps, 2), y = unlist(powtab.ph[i, c("uv.l", "uv.u")]), col = colv["uv"])
+  lines(x = rep(i - .0 * eps, 2), y = unlist(powtab.ph[i, c("eb.non.l", "eb.non.u")]), col = colv["eb.non"])
+  lines(x = rep(i + .5 * eps, 2), y = unlist(powtab.ph[i, c("eb.imp.l", "eb.imp.l")]), col = colv["eb.imp"])
+}
+lines(x = 1:nphen - .5 * eps, y = powtab.ph$uv.est, col = colv["uv"])
+lines(x = 1:nphen - .0 * eps, y = powtab.ph$eb.non.est, col = colv["eb.non"])
+lines(x = 1:nphen + .5 * eps, y = powtab.ph$eb.imp.est, col = colv["eb.imp"])
+ats <- sapply(Data_all$impc$procord, function(procc) mean(which(powtab.ph$procnam == procc)))
+axis(side = 1, at = ats, labels = Data_all$impc$procord, las = 2, cex.axis = cexlab)
+mtext(side = 2, line = 4, text = "Proportion of KO lines annotated", cex = cexlab)
+par(xpd = NA)
+legend(x = "topleft",  legend = c("MV model (observed data)", "MV model (missing data)", "UV model"), 
+       col = colv[c("eb.non", "eb.imp", "uv")], lty = 1,
+       cex = cexlab, lwd = 2)
+par(xpd = F)
+dev.off()
+file.copy(from = paste(control$figure_dir, "/", fnamc, sep = ""),
+          to = paste(control$dropbox_figure_dir, "/", fnamc, sep = ""), overwrite = TRUE)
 
-
-# pow.uv <- sapply(phen.un, function(ph) mean(resimp[resimp$ph == ph, "uv.sig"][!is.na(resimp$uv.t)], na.rm = T))
-# pow.eb.non <- sapply(phen.un, function(ph) mean(resimp[resimp$ph == ph, "eb.sig"][!is.na(resimp$uv.t)], na.rm = T))
-# pow.eb.imp <- sapply(phen.un, function(ph) mean(resimp[resimp$ph == ph, "eb.sig"][is.na(resimp$uv.t)], na.rm = T))
