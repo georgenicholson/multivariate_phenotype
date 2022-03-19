@@ -23,7 +23,7 @@ cexax <- .9
 incl <- "truekos"#for(incl in c("negcons", "truekos")[2]){
 plot_file_name <- "paper_annotation_heatmaps_figure.jpg"
 
-jpeg(file.path(control$figure_dir, plot_file_name), 9, 9, units = "in", res = 500)
+jpeg(file.path(control$figure_dir, plot_file_name), width = 9, height = 9, units = "in", res = 500)
 par(oma = c(4, 4, 4, 4))
 layout(mat = matrix(c(1, 1, 2, 2, 3, 5, 4, 6), 4, 2), widths = c(.95, .05), heights = rep(.25, 4))
 par(mar = c(2, 12, 2, 1))#, oma = c(4, 1, 4, 1))
@@ -78,7 +78,7 @@ Sig.mn <- compl[[control$mv_meth_nam_use]]$Sig.comb
 R.mn <- compl[[control$mv_meth_nam_use]]$R.comb
 SigCormn <- t(t(Sig.mn) / sqrt(diag(Sig.mn))) / sqrt(diag(Sig.mn))
 fnamc <- "paper_correlation_heatmaps_figure.jpg"#paste("estmeth_", estimation.meth, "_EMits_", em.nits, "_Sig_and_R_heatmaps.jpg", sep = "")
-jpeg(paste(control$figure_dir, "/", fnamc, sep = ""), 12, 8, units = "in", res = 500)
+jpeg(paste(control$figure_dir, "/", fnamc, sep = ""), width = 12, height = 8, units = "in", res = 500)
 par(mfrow = c(1, 2))
 layout(mat = matrix(c(1, 1, 2, 2, 3, 4), 2, 3), widths = c(.47, .47, .06), heights = c(.25, .75))
 par(oma = c(4, 21, 4, 4))

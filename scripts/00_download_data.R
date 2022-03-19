@@ -1,15 +1,3 @@
-# rm(list = ls())
-# ##########################################
-# # Source function files
-# fns_to_source <- list.files("scripts/functions", full.names = TRUE)
-# for (file_curr in fns_to_source) {
-#   source(file_curr)
-# }
-# 
-# ##########################################
-# # control contains parameter settings
-# control <- get_control_parameters_mv()
-
 ##########################################
 # Download data
 if (!"data/impc" %in% list.dirs(control$data_dir)) {
@@ -47,18 +35,11 @@ for (Data in c("eqtl", "impc")) {
   Data_all[[Data]]$S_zeroed <- Data_all[[Data]]$S_raw
   Data_all[[Data]]$Y_zeroed[is.na(Data_all[[Data]]$Y_raw)] = 0
   Data_all[[Data]]$S_zeroed[is.na(Data_all[[Data]]$Y_raw)] = control$prior.sd.on.unobserved.thetahat
-  # Data_all[[Data]]$Y_raw <- Y_raw
-  # Data_all[[Data]]$S_raw <- S_raw
-  # Data_all[[Data]]$Y_zeroed <- Y_zeroed
-  # Data_all[[Data]]$S_zeroed <- S_zeroed
   Data_all[[Data]]$sam_names <- rownames(Data_all[[Data]]$Y_raw)
   Data_all[[Data]]$meas_names <- colnames(Data_all[[Data]]$Y_raw)
   Data_all[[Data]]$N_all <- length(Data_all[[Data]]$sam_names)
   Data_all[[Data]]$P_all <- length(Data_all[[Data]]$meas_names)
 }
-
-
-
 
 #############################################################
 #create and save ordering of procedures for plotting, so that labels don't overlap
@@ -87,7 +68,6 @@ procord[]
 phord <- unique(phmap[order(match(phmap$procnam, procord)), "ph"])
 Data_all$impc$phord <- phord
 Data_all$impc$procord <- procord
-
 
 saveRDS(Data_all, file = control$Data_all_file)
 

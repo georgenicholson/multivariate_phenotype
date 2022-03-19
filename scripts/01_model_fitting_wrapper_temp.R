@@ -1,10 +1,4 @@
-# rm(list = ls())
-#
-# path_to_dir <- "C:/Users/nicho/Documents/bauer_sync/projects/impc_mv_analysis/github_multivariate_phenotype/multivariate_phenotype"
-# renv::restore(packages = "renv")
-# renv::activate()
-# renv::restore()
-# renv::restore(packages = "renv")
+
 arguments <- commandArgs()
 if("--args" %in% arguments){
   argnam.in <- data.frame(nam = c("run_type", "scen", "subsamseed"), 
@@ -19,13 +13,13 @@ if("--args" %in% arguments){
   subsamseed <- 1
 }
 print(Sys.info())
+
 ##########################################
 # Source function files
 fns_to_source <- list.files("scripts/functions", full.names = TRUE)
 for (file_curr in fns_to_source) {
   source(file_curr)
 }
-
 
 ##########################################
 # control to contain parameters
@@ -44,7 +38,6 @@ print(paste("data dir exits:", dir.exists("data")))
 if (!file.exists(control$Data_all_file)) {
   source("scripts/00_download_data.R")
 }
-
 
 ##########################################
 # Load data
@@ -81,14 +74,16 @@ Y.eml$zero <- Data_all[[Data]]$Y_zeroed
 S.eml$raw <- Data_all[[Data]]$S_raw
 S.eml$zero <- Data_all[[Data]]$S_zeroed
 
-
 ###################################
 # Create and Load train-test samples information 
 train_test_list <- get_train_test_split(control = control, Data_all = Data_all, N = N, P = P, Data = Data, n_subsamples = n_subsamples)
 train_test_list_file_curr <- file.path("output", "train_test_splits", paste0(Data, "_N_", N, "_P_", P, ".RDS"))
-# if (!file.exists(train_test_list_file_curr)) {
+force_overwrite_train_test_splits <- FALSE
+if (!file.exists(train_test_list_file_curr) | force_overwrite_train_test_splits) {
   saveRDS(object = train_test_list, file = train_test_list_file_curr)
-# }
+} else {
+  train_test_list <- readRDS(file = train_test_list_file_curr)
+}
 phens_to_use <- train_test_list$phens_to_use
 
 ###################################

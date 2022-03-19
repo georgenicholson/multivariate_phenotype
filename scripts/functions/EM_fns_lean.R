@@ -50,12 +50,9 @@ em.update.function <- function(Y.em, S.em, Sigl, R, omegaseq, pimat, Ksig,
     pi.thresh <- 1e-10
     for(i in 1:nrow(Y.em)){
       propdone <- i / nrow(Y.em)
-      # cat(paste0("\rCalculating likelihood matrix; estimated time remaining = ", 
-      #            ceiling(difftime(Sys.time(), t0, units = "mins") * (1 - propdone) / propdone), " mins "))
       mn.add <- var.add <- moment2.add <- lfsrmat.add <- 0
       if(any(!is.na(Y.em[i, ]))){
-        # logmvndensc <- matrix(-Inf, M, nSig)
-        for(sc in Sig.inds.calc){        # for(sc in 1:nSig){
+        for(sc in Sig.inds.calc){
           for(m in 1:M){
             if(pimat[m, sc] > pi.thresh){
               Sigc <- Sigl[[sc]] * omegaseq[m]
@@ -136,9 +133,7 @@ em.update.function <- function(Y.em, S.em, Sigl, R, omegaseq, pimat, Ksig,
           if(fac.model == "fa")
             max.K.change <- 1
           if(j == ndim.check + 1)
-            K.new <- Kc <- max(c(1, floor(Ksig[sc] * (1 - max.K.change)), dim.check.fa[which.min(obj.K.v)]))
-          # K.new <- Kc <- max(c(1, floor(Ksig[sc] * (1 - max.K.change)), dim.check.fa[which.min(obj.K.v)]))
-          # K.new <- Kc <- max(c(1, floor(Ksig[sc] * (1 - max.K.change)), (1:P)[which.min(obj.K.v)] + 1))
+            K.new<-Kc <- max(c(1, floor(Ksig[sc] * (1 - max.K.change)), dim.check.fa[which.min(obj.K.v)]))
           if(Kc <= P){
             if(fac.model == "pca"){
               eigc <- eigen(Ctl[[sc]] / btl[[sc]])
@@ -148,22 +143,19 @@ em.update.function <- function(Y.em, S.em, Sigl, R, omegaseq, pimat, Ksig,
                 t(eigc$vectors[, 1:Kc, drop = F]) + sig2hat * diag(rep(1, P))
             }
             if(fac.model == "fa"){
-              # print(Kc)
               fa.covmat <- Ctl[[sc]] / btl[[sc]]
               lower.psi <- .005
               control <- list(nstart = 1, trace = F, lower = lower.psi, opt = list(maxit = 10000, factr = 1e7), rotate = NULL)
               fa.tryer <- try(silent = TRUE, expr = {
-                fa.out <- factanal(factors = Kc, covmat = fa.covmat, n.obs = N, start = fa.startc, control = control)
+                fa.out <- stats::factanal(factors = Kc, covmat = fa.covmat, n.obs = N, start = fa.startc, control = control)
               })
               fa.failed <- inherits(fa.tryer, "try-error")
               if(!fa.failed){
                 fa.startc <- as.matrix(pmax(lower.psi, fa.out$uniquenesses))
                 fa.corout <- fa.out$loadings %*% t(fa.out$loadings) + diag(fa.out$uniquenesses)
-                # image(fa.corout)
                 Sigoutl[[sc]] <- fa.corout * (sqrt(diag(fa.covmat)) %o% sqrt(diag(fa.covmat)))
               } else { #Do pca optimization
                 eigc <- eigen(Ctl[[sc]] / btl[[sc]])
-                # sig2hat <- mean(eigc$values[(Kc + 1):P])
                 sig2hat <- ifelse(Kc == P, 0, mean(eigc$values[(Kc + 1):P]))
                 Sigoutl[[sc]] <- eigc$vectors[, 1:Kc, drop = F] %*% 
                   as.matrix(diag(eigc$values[1:Kc], nrow = Kc, ncol = Kc) - sig2hat * diag(rep(1, Kc), nrow = Kc, ncol = Kc)) %*% 
@@ -178,34 +170,16 @@ em.update.function <- function(Y.em, S.em, Sigl, R, omegaseq, pimat, Ksig,
               npar <- Kc * P + 1 - .5 * Kc * (Kc - 1)
             if(fac.model == "fa")
               npar <- Kc * P + P - .5 * Kc * (Kc - 1)
-            # npar <- 2 * (Kc * P + 1 - .5 * Kc * (Kc - 1))
-            # obj.K.v[j] <- 2 * npar / 2 * log(eff.n) + 
             obj.K.v[j] <- btl[[sc]] * determinant(Sigoutl[[sc]], logarithm = T)$modulus + sum(diag(solve(Sigoutl[[sc]], Ctl[[sc]]))) 
             if(include.bic)
               obj.K.v[j] <- obj.K.v[j] + npar * log(eff.n) * bic.pen.mult
           }
         }
-        # dimnames(Sigoutl[[sc]]) <- list(ph.use, ph.use)
         Ksig.new[sc] <- K.new
         if(update.K[sc])
           plot(dim.check.fa, obj.K.v, ty = "l")
       }
       Ksig <- Ksig.new
-      # }
-    # } else {
-    #   for(sc in Sig.inds.calc){
-    #     Kc <- Ksig[sc]
-    #     if(Kc < P){
-    #       eigc <- eigen(Ctl[[sc]] / btl[[sc]])
-    #       sig2hat <- mean(eigc$values[(Kc + 1):P])
-    #       Sigoutl[[sc]] <- eigc$vectors[, 1:Kc, drop = F] %*% as.matrix(diag(eigc$values[1:Kc], nrow = Kc, ncol = Kc) - 
-    #               sig2hat * diag(rep(1, Kc), nrow = Kc, ncol = Kc)) %*% t(eigc$vectors[, 1:Kc, drop = F]) + sig2hat * diag(rep(1, P))
-    #     } else {
-    #       Sigoutl[[sc]] <- Ctl[[sc]] / btl[[sc]]
-    #     }
-    #     # dimnames(Sigoutl[[sc]]) <- list(ph.use, ph.use)
-    #   }
-    # }
       return(list(Sigl = Sigoutl, Ksig = Ksig, Ctl = Ctl, btl = btl, rmat = rmat, loglikv = loglikv, llmat = llmat))
     }
     if(meth %in% c("post.mn", "post.mn.fac"))
@@ -221,9 +195,6 @@ em.update.function <- function(Y.em, S.em, Sigl, R, omegaseq, pimat, Ksig,
           npar <- Kc * P + 1 - .5 * Kc * (Kc - 1)
         if(fac.model == "fa")
           npar <- Kc * P + P - .5 * Kc * (Kc - 1)
-        # npar <- Kc * P + 1 - .5 * Kc * (Kc - 1)
-        # npar <- 2 * (Kc * P + 1 - .5 * Kc * (Kc - 1))
-        # negobj <- negobj - 2 * npar / 2 * log(eff.n)
         if(include.bic)
           negobj <- negobj - npar * log(eff.n) * bic.pen.mult / 2
         if(wish.pri)
@@ -232,15 +203,11 @@ em.update.function <- function(Y.em, S.em, Sigl, R, omegaseq, pimat, Ksig,
     }
     llikv <- rep(NA, nrow(Y.em))
     names(llikv) <- rownames(Y.em)
-    # cat(paste0("Initializing likelihood matrix\n"))
     t0 <- Sys.time()
     for(i in 1:nrow(Y.em)){
       propdone <- i / nrow(Y.em)
-      # cat(paste0("\rCalculating likelihood matrix; estimated time remaining = ", 
-      #            ceiling(difftime(Sys.time(), t0, units = "mins") * (1 - propdone) / propdone), " mins "))
       if(any(!is.na(Y.em[i, ]))){
         if(recalc.llmat){
-          # logmvndensc <- matrix(-Inf, M, nSig)
           for(sc in Sig.inds.calc){
             for(m in 1:M){
               if(pimat[m, sc] > 0){
@@ -262,47 +229,3 @@ em.update.function <- function(Y.em, S.em, Sigl, R, omegaseq, pimat, Ksig,
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-# round(Ctl[[1]][1:10, 1:10], 2)
-
-
-
-
-
-
-
-# var.explained.init <- cumsum(eigen(Sig.init)$values) / sum(eigen(Sig.init)$values)
-# tail.area <- .05
-# percent.start.tail <- .8
-# tail.start <- match(T, percent.start.tail < var.explained.init)
-# geom.p <- .5#1 - exp(log(tail.area) / tail.start)
-# 
-# for(Kc in seq(10, 140, by = 10)){#                Kc = 6
-#   print(Kc)
-#   fa.covmat <- Ctl[[sc]] / btl[[sc]]
-#   lower.psi <- .005
-#   control <- list(nstart = 1, trace = TRUE, lower = lower.psi, opt = list(maxit = 10000, factr = 1e8), rotate = NULL)
-#   fa.out <- factanal(factors = Kc, covmat = fa.covmat, n.obs = N, start = startc, control = control)
-#   startc <- as.matrix(pmax(lower.psi, fa.out$uniquenesses))
-# }
-# # , start = diag(Ctl[[sc]] / btl[[sc]]))
-# Kc <- floor(P / 32)
-# fa.out <- factanal(factors = Kc, covmat = Ctl[[sc]] / btl[[sc]])
-# str(test)
-# Sigoutl[[sc]] <- fa.out$loadings %*% t(fa.out$loadings) + diag(fa.out$uniquenesses)
-# eigc <- eigen(Ctl[[sc]] / btl[[sc]])
-# sig2hat <- mean(eigc$values[(Kc + 1):P])
-# Sigoutl[[sc]] <- eigc$vectors[, 1:Kc, drop = F] %*% 
-#   as.matrix(diag(eigc$values[1:Kc], nrow = Kc, ncol = Kc) - sig2hat * diag(rep(1, Kc), nrow = Kc, ncol = Kc)) %*% 
-#   t(eigc$vectors[, 1:Kc, drop = F]) + sig2hat * diag(rep(1, P))

@@ -1,15 +1,3 @@
-# control = control 
-# Y.em = Yhat[sams_for_model_training, phens_to_use]
-# S.em = smat[sams_for_model_training, phens_to_use] 
-# MVphen_K = MVphen_K
-# Sigl.em.init = Sigl.em.init
-# R.em.init = R.init
-# update.Sig = T
-# update.K = F
-# pi.init = NULL
-# fac.model = c("fa", "pca")[1]
-# bic.pen.mult = 0.5
-# wish.pri = F
 
 EM_algo_mixture_multi_Sig <- function(control, Y.em, S.em, MVphen_K, Sigl.em.init, R.em.init,
                             update.Sig = T, update.K = F, pi.init = NULL,
@@ -44,64 +32,42 @@ EM_algo_mixture_multi_Sig <- function(control, Y.em, S.em, MVphen_K, Sigl.em.ini
     pimat <- pimat / sum(pimat)
   } else {
     pimat <- pi.init
-    #Check that pimat is correctly specified here
+    # TODO: input check that pimat is correctly specified here
   }
   Ksig <- rep(MVphen_K, nSig)
-  # if(is.null(K.init)){
-  #   Ksig <- rep(P, nSig)
-  #   Ksig[!update.Sig] <- NA
-  # } else {
-  #   Ksig <- K.init
-  #   #Check that K.init is correctly specified here
-  # }
-  
+
   ##############################################
   #Calc initial likelihood matrix
-  # Y.em = Y.em; S.em = S.em; Sigl = Sigl; R = R; omegaseq = omegaseq;
-  # pimat = pimat; meth = "just.obj"; update.Sig = update.Sig; Ksig = Ksig; update.K = update.K;
-  # fac.model = fac.model; bic.pen.mult = bic.pen.mult; prior.in.obj = F
   llikmat.out <- em.update.function(Y.em = Y.em, S.em = S.em, Sigl = Sigl, R = R, omegaseq = control$omegaseq, 
                                   pimat = pimat, meth = "just.obj", prior.in.obj = F, update.Sig = update.Sig, 
                                   Ksig = Ksig, update.K = update.K, fac.model = fac.model, bic.pen.mult = bic.pen.mult,
                                   recalc.llmat = F, wish.pri = wish.pri)
   llmat <- llikmat.out$llmat
-  # range(llmat, na.rm = T)
+  
   ###################################
   # Start EM algorithm
   objv <- c()
   itnum <- 1
   converged <- F
   while(!converged){
-      ###
-    # sapply(Sigl, function(M) qr(M)$rank)
-    ###
-    
     
     #############################################################
     # Compute updated Sigl, rmat
-    # source(paste0(R.file.dir, "/impc_mv_paper_code/EM_fns_lean.R"))
-    # Y.em = Y.em; S.em = S.em; Sigl = Sigl; R = R; omegaseq = omegaseq;
-    # pimat = pimat; meth = "update.Sigl"; update.Sig = update.Sig; Ksig = Ksig; update.K = update.K;
-    # fac.model = fac.model; bic.pen.mult = bic.pen.mult; llmat = llmat
     em.up.out <- em.update.function(Y.em = Y.em, S.em = S.em, Sigl = Sigl, R = R, omegaseq = control$omegaseq,
                                pimat = pimat, meth = "update.Sigl", update.Sig = update.Sig, Ksig = Ksig, update.K = update.K, 
                                fac.model = fac.model, bic.pen.mult = bic.pen.mult, llmat = llmat, wish.pri = wish.pri)
     Sigl <- em.up.out$Sigl
     Ksig <- em.up.out$Ksig
-    # if(update.Sig)
-    # if(update.K)
     rmat <- em.up.out$rmat
     llmat <- em.up.out$llmat
-    
 
     ############################################
-    # Optimize wrt pi
+    # Optimize wrt pi (note: implemented for a uniform Dirichlet here)
     diralpha.new <- apply(rmat, 2:3, function(v) sum(v, na.rm = T))
     pimat[] <- diralpha.new / sum(diralpha.new)
+    
     #############################
     # Evaluate objective function
-    # objv[itnum] <- em.update.function(Y.em = Y.em, S.em = S.em, Sigl = Sigl, R = R, omegaseq = omegaseq,
-    #                            pimat = pimat, Ksig = Ksig, meth = "just.obj", update.Sig = update.Sig)$obj
     calc.obj.out <- em.update.function(Y.em = Y.em, S.em = S.em, Sigl = Sigl, R = R, omegaseq = control$omegaseq,
                                        pimat = pimat, Ksig = Ksig, meth = "just.obj", update.Sig = update.Sig, 
                                        fac.model = fac.model, bic.pen.mult = bic.pen.mult, llmat = llmat, recalc.llmat = F,
@@ -110,28 +76,6 @@ EM_algo_mixture_multi_Sig <- function(control, Y.em, S.em, MVphen_K, Sigl.em.ini
     objv[itnum] <- calc.obj.out$obj
     llikv <- calc.obj.out$llikv
     
-    # #############################
-    # # Check convergence
-    # if(itnum > it.start.rel.tol){
-    #   most.recent.change <- objv[itnum] - objv[itnum - 1]
-    #   total.change.from.start <- objv[itnum] - objv[it.start.rel.tol]
-    #   rel.change <- most.recent.change / total.change.from.start
-    #   if(rel.change > 0 & rel.change < rel.tol)
-    #     converged <- TRUE
-    # }
-    
-    # ##################################
-    # # Print trace
-    # if(length(objv) > 1){
-    #   dob <- objv[length(objv)] - objv[length(objv) - 1]
-    #   print(paste("Iteration = ", itnum))
-    #   print(paste0("Ksig = ", Ksig))
-    #   print(paste0("Obj = ", objv[length(objv)]))
-    #   print(paste0("Change in obj = ", dob))
-    #   pisum <- colSums(pimat)
-    #   print("Pi = ")
-    #   print(round(t(pimat[, order(-pisum)]) * 100))
-    # }
     ##################################
     # Check convergence and print trace
     if(length(objv) > 1){
@@ -140,16 +84,12 @@ EM_algo_mixture_multi_Sig <- function(control, Y.em, S.em, MVphen_K, Sigl.em.ini
       tolerance.eps <- llik.scale * N * control$MVphen_conv_tolerance
       if(most.recent.change < 0 & most.recent.change > -tolerance.eps){
         converged <- TRUE
-        # if(stagec == "final")
-        #   final.converged <- T
       }
       dob <- objv[length(objv)] - objv[length(objv) - 1]
       print(paste("Iteration = ", itnum))
       print(paste0("Ksig = ", Ksig))
       print(paste0("Obj = ", objv[length(objv)]))
       print(paste0("Change in obj = ", dob))
-      # print("Pi = ")
-      # print(round(t(pimat[, order(-colSums(pimat))]) * 100, 2))
       if (ncol(pimat) > 1) {
         print("Pi = ")
         print(round(colSums(pimat) * 100, 2))
@@ -158,8 +98,6 @@ EM_algo_mixture_multi_Sig <- function(control, Y.em, S.em, MVphen_K, Sigl.em.ini
       print(paste0("tolerance.eps = ", tolerance.eps))
       print(paste0("most.recent.change = ", most.recent.change))
       plot(objv, ty = "l")
-      # for(i in 1:nSig)
-      #   image(Sigl[[i]])
     }
     itnum <- itnum + 1
   }

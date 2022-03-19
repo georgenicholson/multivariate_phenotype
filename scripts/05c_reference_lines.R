@@ -223,7 +223,7 @@ for(i in 1:3){
 }
 # mtext(side = 3, text = paste("(", letters[match(namc, namv)], ")", sep = ""), at = -limn, line = 1, cex = 1.3)
 numv <- formatC(c(fdrci[[1]], fdrci[[2]]) * 100, format = "f", digits = 1)
-fdrlab <- paste("Fsr = ", numv[1], "% (", numv[2], "% - ", numv[3], "%)", sep = "")
+fdrlab <- paste("Estimated Fsr = ", numv[1], "% (", numv[2], "% - ", numv[3], "%)", sep = "")
 mtext(side = 3, text = fdrlab, line = .5, cex = 1)
 dev.off()
 file.copy(from = paste(control$figure_dir, "/", fnamc, sep = ""),
