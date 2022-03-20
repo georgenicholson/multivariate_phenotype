@@ -114,7 +114,7 @@ names(tl.pre)
 big.mar <- 1.5
 small.mar <- .5
 fnamc <- "ref_lines_heatmap.jpg"
-jpeg(paste(control$figure_dir, "/", fnamc, sep = ""), 12, 18, units = "in", res = 800)
+jpeg(paste(control$figure_dir, "/", fnamc, sep = ""), 12, 18, units = "in", res = 600)
 layout(matrix(1:(2 * nlin), 1), width = rep(nlinrep, each = 2) + big.mar)
 par(oma = c(6, 22, 0, 20))
 martop <- 10

@@ -391,7 +391,8 @@ nphen <- length(phenun)
 xpl <- 1:nphen
 cexlab = 1
 fnamc <- "power_by_phenotype.jpg"
-jpeg(paste(control$figure_dir, "/", fnamc, sep = ""), 20, 12, units = "in", res = 1000)
+jpeg(paste(control$figure_dir, "/", fnamc, sep = ""), 20, 12, units = "in", res = 500)
+# pdf(paste(control$figure_dir, "/", fnamc, sep = ""), 20, 12)#, units = "in", res = 1000)
 hei_prop <- .7
 layout(mat = matrix(1:2, 2, 1), heights = c(1 - hei_prop, hei_prop))
 par(oma = c(25, 8, 2, 6), mar = c(0, 0, 0, 0))
