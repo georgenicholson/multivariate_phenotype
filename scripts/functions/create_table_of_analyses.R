@@ -1,5 +1,5 @@
 
-create_table_of_analyses <- function(control, check_status = T, run_type = c("demo", "main", "benchmark", "test_benchmark")[2]) {
+create_table_of_analyses <- function(control, check_status = F, run_type = c("demo", "main", "benchmark", "test_benchmark")[2]) {
   
   if(run_type == "demo") {
     runtab <- data.frame(N = 100, P = 10, Data = "impc", 
