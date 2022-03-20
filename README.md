@@ -27,7 +27,7 @@ renv::restore(path_to_dir)
 
 ## Data
 
-Accompanying data provided in "data/Data_all.RDS" which can be loaded in R via
+Accompanying data are provided in "data/Data_all.RDS" which can be loaded in R via
 ```
 Data_all <- readRDS("data/Data_all.RDS")
 ```
