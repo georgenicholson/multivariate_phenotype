@@ -9,11 +9,11 @@ To run these scripts, you will need R version 3.6.3 or later, widely available o
 Unix-like, Windows and Mac families of operating systems. If you have R version 4.0.0
 or above on Windows, you will also need to install 
 [Rtools](https://cran.r-project.org/bin/windows/Rtools/). 
-# The demo below has been tested on macOS 10.15 Catalina, Windows 10 and CentOS Linux 7. 
+
 To get started, first [clone](https://git-scm.com/book/en/v2/Git-Basics-Getting-a-Git-Repository)
 this repository onto your local machine in folder "<your_path>/multivariate_phenotype"
 
- Next, open an R console, and install the 
+Next, open an R console, and install the 
 [renv](https://rstudio.github.io/renv/index.html) R package if you don't have it 
 already (e.g. via `install.packages("renv")`). Then, run the following, 
 changing `path_to_dir` to the path of your local version of this repository,
